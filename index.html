@@ -110,15 +110,51 @@
 
             <div id="results-container" class="mt-8 hidden">
                 <div id="results" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div id="male-result-card" class="text-center p-6 rounded-xl">
-                        <h3 class="text-2xl font-bold mb-2">남성 점수</h3>
-                        <p id="male-score" class="text-5xl font-bold mb-2"></p>
-                        <p id="male-tier" class="text-2xl font-semibold px-4 py-1 rounded-full inline-block"></p>
+                    <!-- Male Result Card -->
+                    <div id="male-result-card-wrapper">
+                        <div id="male-result-card" class="text-center p-6 rounded-t-xl">
+                            <h3 class="text-2xl font-bold mb-2">남성 점수</h3>
+                            <p id="male-score" class="text-5xl font-bold mb-2"></p>
+                            <p id="male-tier" class="text-2xl font-semibold px-4 py-1 rounded-full inline-block"></p>
+                        </div>
+                        <div id="male-calculation-details" class="text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2">
+                            <h4 class="font-bold text-lg mb-2 text-center">점수 계산 과정</h4>
+                            <div class="text-sm space-y-2">
+                                <p>1. <strong>핵심 원점수:</strong> <span id="male-core-raw-score" class="font-semibold"></span> / 135.0</p>
+                                <p>2. <strong>가산점 원점수:</strong> <span id="male-bonus-raw-score" class="font-semibold"></span> / 38.0</p>
+                                <div class="mt-2 pt-2 border-t">
+                                    <p class="font-semibold">3. 최종 점수 계산:</p>
+                                    <div class="text-xs pl-4 mt-1 space-y-1">
+                                        <p>핵심 점수: (<span id="male-core-raw-score-2"></span>/135) * 100 = <span id="male-core-normalized-score" class="font-bold"></span>점</p>
+                                        <p>가산점: (<span id="male-bonus-raw-score-2"></span>/38) * 20 = <span id="male-bonus-normalized-score" class="font-bold"></span>점</p>
+                                        <p class="mt-2 text-base"><strong>총점:</strong> <span id="male-core-normalized-score-2" class="font-bold"></span> + <span id="male-bonus-normalized-score-2" class="font-bold"></span> = <span id="male-final-score-calc" class="text-xl font-bold text-blue-600"></span>점</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="female-result-card" class="text-center p-6 rounded-xl">
-                        <h3 class="text-2xl font-bold mb-2">여성 점수</h3>
-                        <p id="female-score" class="text-5xl font-bold mb-2"></p>
-                        <p id="female-tier" class="text-2xl font-semibold px-4 py-1 rounded-full inline-block"></p>
+                     <!-- Female Result Card -->
+                    <div id="female-result-card-wrapper">
+                        <div id="female-result-card" class="text-center p-6 rounded-t-xl">
+                            <h3 class="text-2xl font-bold mb-2">여성 점수</h3>
+                            <p id="female-score" class="text-5xl font-bold mb-2"></p>
+                            <p id="female-tier" class="text-2xl font-semibold px-4 py-1 rounded-full inline-block"></p>
+                        </div>
+                        <div id="female-calculation-details" class="text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2">
+                            <h4 class="font-bold text-lg mb-2 text-center">점수 계산 과정</h4>
+                             <div class="text-sm space-y-2">
+                                <p>1. <strong>핵심 원점수:</strong> <span id="female-core-raw-score" class="font-semibold"></span> / 175.0</p>
+                                <p>2. <strong>가산점 원점수:</strong> <span id="female-bonus-raw-score" class="font-semibold"></span> / 32.0</p>
+                                <div class="mt-2 pt-2 border-t">
+                                    <p class="font-semibold">3. 최종 점수 계산:</p>
+                                    <div class="text-xs pl-4 mt-1 space-y-1">
+                                        <p>핵심 점수: (<span id="female-core-raw-score-2"></span>/175) * 100 = <span id="female-core-normalized-score" class="font-bold"></span>점</p>
+                                        <p>가산점: (<span id="female-bonus-raw-score-2"></span>/32) * 20 = <span id="female-bonus-normalized-score" class="font-bold"></span>점</p>
+                                        <p class="mt-2 text-base"><strong>총점:</strong> <span id="female-core-normalized-score-2" class="font-bold"></span> + <span id="female-bonus-normalized-score-2" class="font-bold"></span> = <span id="female-final-score-calc" class="text-xl font-bold text-red-600"></span>점</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                  <div id="match-result" class="mt-6 text-center">
@@ -232,10 +268,9 @@
             if (!select) return;
             select.innerHTML = '';
             
-            // Add default option
             const defaultOpt = document.createElement('option');
             defaultOpt.textContent = '선택해주세요';
-            defaultOpt.value = '0';
+            defaultOpt.value = ''; // Use empty string for easier validation
             defaultOpt.disabled = true;
             defaultOpt.selected = true;
             select.appendChild(defaultOpt);
@@ -259,27 +294,37 @@
             const data = scoreData[gender];
             let coreScore = 0;
             let bonusScore = 0;
-            let allSelected = true;
+            let allCoreSelected = true;
 
-            Object.keys(data.core).forEach(category => {
+            for (const category of Object.keys(data.core)) {
                 const select = document.getElementById(`${gender}-${category}`);
-                if (select.value === '0') allSelected = false;
-                coreScore += parseFloat(select.value);
-            });
-            Object.keys(data.bonus).forEach(category => {
-                const select = document.getElementById(`${gender}-${category.replace('_', '-')}`);
-                if (select.value === '0') {
-                    // Bonus items can be unselected, so we don't set allSelected to false here
+                if (select.value === '') {
+                    allCoreSelected = false;
+                    break;
                 }
-                bonusScore += parseFloat(select.value);
-            });
+                coreScore += parseFloat(select.value);
+            }
+            
+            if (!allCoreSelected) return null;
 
-            // If not all core items are selected, return null to indicate incomplete form
-            if (!allSelected) return null;
-
+            for (const category of Object.keys(data.bonus)) {
+                const select = document.getElementById(`${gender}-${category.replace('_', '-')}`);
+                if (select.value !== '') { // Only add if a bonus is selected
+                    bonusScore += parseFloat(select.value);
+                }
+            }
+            
             const normalizedCore = (coreScore / data.maxCore) * 100;
             const normalizedBonus = (bonusScore / data.maxBonus) * 20;
-            return normalizedCore + normalizedBonus;
+            const finalScore = normalizedCore + normalizedBonus;
+
+            return {
+                coreRaw: coreScore,
+                bonusRaw: bonusScore,
+                coreNormalized: normalizedCore,
+                bonusNormalized: normalizedBonus,
+                finalScore: finalScore
+            };
         }
 
         function getTier(score) {
@@ -308,11 +353,26 @@
             return `<span class="font-bold text-blue-600">정상 매칭!</span> (상대 점수: ${partnerScore.toFixed(1)}점)`;
         }
 
+        function displayCalculation(gender, result) {
+            const { coreRaw, bonusRaw, coreNormalized, bonusNormalized, finalScore } = result;
+            
+            document.getElementById(`${gender}-core-raw-score`).textContent = coreRaw.toFixed(2);
+            document.getElementById(`${gender}-bonus-raw-score`).textContent = bonusRaw.toFixed(2);
+            document.getElementById(`${gender}-core-raw-score-2`).textContent = coreRaw.toFixed(2);
+            document.getElementById(`${gender}-bonus-raw-score-2`).textContent = bonusRaw.toFixed(2);
+            document.getElementById(`${gender}-core-normalized-score`).textContent = coreNormalized.toFixed(2);
+            document.getElementById(`${gender}-bonus-normalized-score`).textContent = bonusNormalized.toFixed(2);
+            document.getElementById(`${gender}-core-normalized-score-2`).textContent = coreNormalized.toFixed(2);
+            document.getElementById(`${gender}-bonus-normalized-score-2`).textContent = bonusNormalized.toFixed(2);
+            document.getElementById(`${gender}-final-score-calc`).textContent = finalScore.toFixed(2);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initializeDropdowns();
             const calculateBtn = document.getElementById('calculate-btn');
             const resultsContainer = document.getElementById('results-container');
 
+            // --- Fill Detail Tables (omitted for brevity, same as previous version) ---
             const detailSections = document.querySelectorAll('.space-y-4 details');
             detailSections.forEach(detail => {
                 const summaryText = detail.querySelector('summary').textContent;
@@ -330,31 +390,41 @@
             });
 
             calculateBtn.addEventListener('click', () => {
-                const maleScore = calculateScore('male');
-                const femaleScore = calculateScore('female');
+                const maleResult = calculateScore('male');
+                const femaleResult = calculateScore('female');
 
-                if (maleScore === null || femaleScore === null) {
+                if (maleResult === null || femaleResult === null) {
                     alert('모든 핵심 항목을 선택해주세요.');
+                    resultsContainer.classList.add('hidden');
                     return;
                 }
 
-                const maleTierInfo = getTier(maleScore);
-                const femaleTierInfo = getTier(femaleScore);
+                const maleTierInfo = getTier(maleResult.finalScore);
+                const femaleTierInfo = getTier(femaleResult.finalScore);
 
-                document.getElementById('male-score').textContent = maleScore.toFixed(1);
+                // Display main scores and tiers
+                document.getElementById('male-score').textContent = maleResult.finalScore.toFixed(1);
                 const maleTierEl = document.getElementById('male-tier');
                 maleTierEl.textContent = maleTierInfo.tier;
                 maleTierEl.className = `text-2xl font-semibold px-4 py-1 rounded-full inline-block ${maleTierInfo.className}`;
-                document.getElementById('male-result-card').className = `text-center p-6 rounded-xl ${maleTierInfo.className} ${maleTierInfo.borderClassName}`;
+                document.getElementById('male-result-card').className = `text-center p-6 rounded-t-xl ${maleTierInfo.className} ${maleTierInfo.borderClassName}`;
+                document.getElementById('male-calculation-details').className = `text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2 ${maleTierInfo.borderClassName}`;
 
-                document.getElementById('female-score').textContent = femaleScore.toFixed(1);
+
+                document.getElementById('female-score').textContent = femaleResult.finalScore.toFixed(1);
                 const femaleTierEl = document.getElementById('female-tier');
                 femaleTierEl.textContent = femaleTierInfo.tier;
                 femaleTierEl.className = `text-2xl font-semibold px-4 py-1 rounded-full inline-block ${femaleTierInfo.className}`;
-                document.getElementById('female-result-card').className = `text-center p-6 rounded-xl ${femaleTierInfo.className} ${femaleTierInfo.borderClassName}`;
+                document.getElementById('female-result-card').className = `text-center p-6 rounded-t-xl ${femaleTierInfo.className} ${femaleTierInfo.borderClassName}`;
+                document.getElementById('female-calculation-details').className = `text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2 ${femaleTierInfo.borderClassName}`;
+
+                // Display calculation details
+                displayCalculation('male', maleResult);
+                displayCalculation('female', femaleResult);
                 
-                document.getElementById('male-match-status').innerHTML = `<strong>남성 기준:</strong> ${getMatchStatus(maleScore, femaleScore)}`;
-                document.getElementById('female-match-status').innerHTML = `<strong>여성 기준:</strong> ${getMatchStatus(femaleScore, maleScore)}`;
+                // Display match status
+                document.getElementById('male-match-status').innerHTML = `<strong>남성 기준:</strong> ${getMatchStatus(maleResult.finalScore, femaleResult.finalScore)}`;
+                document.getElementById('female-match-status').innerHTML = `<strong>여성 기준:</strong> ${getMatchStatus(femaleResult.finalScore, maleResult.finalScore)}`;
 
                 resultsContainer.classList.remove('hidden');
                 resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
