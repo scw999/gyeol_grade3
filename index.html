@@ -1,436 +1,1113 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>결하다 등급 계산기</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- 선택된 팔레트: Warm Neutrals (#F8F7F4, #333333, #4A6C6F, #DAB88B) -->
+    <!-- 애플리케이션 구조 계획: 이 웹 앱은 사용자에게 매칭 점수 시스템을 시뮬레이션할 수 있는 직관적인 인터페이스를 제공합니다. 남성 및 여성 프로필을 위한 드롭다운 선택, 가산점 항목 선택, 그리고 각 성별의 총점 및 티어 등급을 표시하는 섹션으로 구성됩니다. 모든 필수 항목이 선택될 때까지 총점 계산을 보류하며, 가산점 반영을 통해 더 실제적인 시뮬레이션을 제공합니다. -->
+    <!-- 시각화 및 콘텐츠 선택: 각 프로필 항목은 드롭다운을 통해 점수를 선택하며, 실시간으로 총점 및 매칭 상태가 업데이트됩니다. 매칭 상태는 색상 및 텍스트로 명확하게 구분되어 사용자가 결과를 쉽게 해석할 수 있도록 합니다. 모든 UI는 HTML/CSS(Tailwind)로 구현되어 SVG/Mermaid 사용을 피합니다. -->
+    <!-- 확인: SVG 그래픽을 사용하지 않았습니다. Mermaid JS를 사용하지 않았습니다. -->
     <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-        }
-        .tier-platinum { background-color: #e5e4e2; color: #36454f; }
-        .tier-gold { background-color: #ffd700; color: #4a2c00; }
-        .tier-silver { background-color: #c0c0c0; color: #333333; }
-        .tier-bronze { background-color: #cd7f32; color: #ffffff; }
-        .tier-general { background-color: #f0f0f0; color: #555555; }
-        .tier-border-platinum { border: 2px solid #c0c0c0; }
-        .tier-border-gold { border: 2px solid #e1b200; }
-        .tier-border-silver { border: 2px solid #a0a0a0; }
-        .tier-border-bronze { border: 2px solid #a96628; }
-        .tier-border-general { border: 2px solid #dcdcdc; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #F8F7F4; color: #333333; }
+        .card { background-color: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); transition: transform 0.3s, box-shadow 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1); }
+        /* 상태 스타일 */
+        .status-upward { background-color: #22c55e; color: white; } /* green-500 */
+        .status-normal { background-color: #e5e7eb; color: #374151; } /* gray-200, gray-700 */
+        .status-downward { background-color: #ef4444; color: white; } /* red-500 */
+        /* 티어 색상 */
+        .tier-royal { background-color: #FFD700; color: #333; } /* Gold */
+        .tier-prestige { background-color: #C0C0C0; color: #333; } /* Silver */
+        .tier-diamond { background-color: #B9F2FF; color: #333; } /* Light Blue */
+        .tier-platinum { background-color: #E5E4E2; color: #333; } /* Platinum Gray */
+        .tier-gold { background-color: #FFC107; color: #333; } /* Amber */
+        .tier-silver { background-color: #ADB5BD; color: white; } /* Darker Gray */
+        .tier-prime { background-color: #6C757D; color: white; } /* Even Darker Gray */
+        .tier-basic { background-color: #DEE2E6; color: #333; } /* Very Light Gray */
+
         select {
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%234A6C6F'%3e%3cpath d='M7 7l3 3 3-3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 0.7rem center;
-            background-size: 0.65rem;
+            background-size: 1.5em;
+            padding-right: 2.5rem;
         }
-        details > summary { list-style: none; }
-        details > summary::-webkit-details-marker { display: none; }
-        details > summary::before {
-            content: '▶';
-            margin-right: 0.5rem;
-            display: inline-block;
-            transition: transform 0.2s;
+        .collapsible-header {
+            cursor: pointer;
+            padding: 1rem;
+            background-color: #f0f0f0;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        details[open] > summary::before {
+        .collapsible-content {
+            padding: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            background-color: #ffffff;
+            display: none; /* 기본적으로 숨김 */
+        }
+        .collapsible-content.active {
+            display: block;
+        }
+        .collapsible-header svg {
+            transition: transform 0.3s ease;
+        }
+        .collapsible-header.active svg {
             transform: rotate(90deg);
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="antialiased">
 
-    <div class="container mx-auto p-4 md:p-8">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">결하다 등급 계산기</h1>
-            <p class="text-gray-600 mt-2">각 항목을 선택하여 남성과 여성의 프로필 점수를 계산해보세요.</p>
-        </header>
+    <main class="container mx-auto px-6 py-12">
+        <section id="simulator" class="mb-20">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-[#4A6C6F] mb-4 text-center">매칭 시스템 시뮬레이터</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-700 leading-relaxed text-center mb-12">
+                남성 및 여성 프로필의 학력, 직업, 소득, 자산, 나이, 외모 점수와 가산점을 선택하여 각 프로필의 총점과 티어 등급을 시뮬레이션 해보세요. 모든 필수 항목을 선택해야 총점이 계산됩니다.
+            </p>
 
-        <!-- Calculator Section -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Male Profile -->
-                <div id="male-profile" class="space-y-4">
-                    <h2 class="text-2xl font-bold text-blue-600 border-b-2 pb-2 border-blue-200">🤵 남성 프로필</h2>
-                    <div class="space-y-3 p-4 bg-blue-50 rounded-lg">
-                        <h3 class="font-semibold text-lg">핵심 항목</h3>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">학력</label><select id="male-education" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">직업</label><select id="male-profession" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">소득</label><select id="male-income" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">자산</label><select id="male-asset" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">나이</label><select id="male-age" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">외모</label><select id="male-appearance" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                    </div>
-                    <div class="space-y-3 p-4 bg-blue-50 rounded-lg">
-                        <h3 class="font-semibold text-lg">가산점 항목</h3>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">차</label><select id="male-car" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">부모/가족 자산</label><select id="male-family-asset" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">키</label><select id="male-height" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">몸무게</label><select id="male-weight" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">본인사진 인증</label><select id="male-photo" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">회사 인증</label><select id="male-company" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">박사/석사 학위</label><select id="male-degree" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
-                    </div>
-                </div>
-
-                <!-- Female Profile -->
-                <div id="female-profile" class="space-y-4">
-                    <h2 class="text-2xl font-bold text-red-600 border-b-2 pb-2 border-red-200">👰‍♀️ 여성 프로필</h2>
-                    <div class="space-y-3 p-4 bg-red-50 rounded-lg">
-                        <h3 class="font-semibold text-lg">핵심 항목</h3>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">학력</label><select id="female-education" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">직업</label><select id="female-profession" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">소득</label><select id="female-income" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">자산</label><select id="female-asset" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">나이</label><select id="female-age" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">외모</label><select id="female-appearance" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                    </div>
-                    <div class="space-y-3 p-4 bg-red-50 rounded-lg">
-                        <h3 class="font-semibold text-lg">가산점 항목</h3>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">차</label><select id="female-car" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">부모/가족 자산</label><select id="female-family-asset" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">키</label><select id="female-height" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">몸무게</label><select id="female-weight" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">본인사진 인증</label><select id="female-photo" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">회사 인증</label><select id="female-company" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                        <div><label class="block text-sm font-medium text-gray-700 mb-1">미인대회/모델 경력</label><select id="female-career" class="w-full p-2 border border-gray-300 rounded-md bg-white shadow-sm focus:ring-red-500 focus:border-red-500"></select></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-8 text-center">
-                <button id="calculate-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-all duration-300 text-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                    결과 확인
-                </button>
-            </div>
-
-            <div id="results-container" class="mt-8 hidden">
-                <div id="results" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Male Result Card -->
-                    <div id="male-result-card-wrapper">
-                        <div id="male-result-card" class="text-center p-6 rounded-t-xl">
-                            <h3 class="text-2xl font-bold mb-2">남성 점수</h3>
-                            <p id="male-score" class="text-5xl font-bold mb-2"></p>
-                            <p id="male-tier" class="text-2xl font-semibold px-4 py-1 rounded-full inline-block"></p>
+            <div class="card p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 남성 프로필 선택 -->
+                <div class="space-y-6" id="male-profile-selects">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">남성 프로필 설정</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="maleEducation" class="block font-semibold text-gray-700 mb-2">학력</label>
+                            <select id="maleEducation" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
                         </div>
-                        <div id="male-calculation-details" class="text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2">
-                            <h4 class="font-bold text-lg mb-2 text-center">점수 계산 과정</h4>
-                            <div class="text-sm space-y-2">
-                                <p>1. <strong>핵심 원점수:</strong> <span id="male-core-raw-score" class="font-semibold"></span> / 135.0</p>
-                                <p>2. <strong>가산점 원점수:</strong> <span id="male-bonus-raw-score" class="font-semibold"></span> / 38.0</p>
-                                <div class="mt-2 pt-2 border-t">
-                                    <p class="font-semibold">3. 최종 점수 계산:</p>
-                                    <div class="text-xs pl-4 mt-1 space-y-1">
-                                        <p>핵심 점수: (<span id="male-core-raw-score-2"></span>/135) * 100 = <span id="male-core-normalized-score" class="font-bold"></span>점</p>
-                                        <p>가산점: (<span id="male-bonus-raw-score-2"></span>/38) * 20 = <span id="male-bonus-normalized-score" class="font-bold"></span>점</p>
-                                        <p class="mt-2 text-base"><strong>총점:</strong> <span id="male-core-normalized-score-2" class="font-bold"></span> + <span id="male-bonus-normalized-score-2" class="font-bold"></span> = <span id="male-final-score-calc" class="text-xl font-bold text-blue-600"></span>점</p>
-                                    </div>
-                                </div>
+                        <div>
+                            <label for="maleJob" class="block font-semibold text-gray-700 mb-2">직업</label>
+                            <select id="maleJob" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="maleIncome" class="block font-semibold text-gray-700 mb-2">소득</label>
+                            <select id="maleIncome" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="maleAsset" class="block font-semibold text-gray-700 mb-2">개인 자산</label>
+                            <select id="maleAsset" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="maleAge" class="block font-semibold text-gray-700 mb-2">나이</label>
+                            <select id="maleAge" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="maleAppearance" class="block font-semibold text-gray-700 mb-2">외모</label>
+                            <select id="maleAppearance" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-8 space-y-4">
+                        <h4 class="text-xl font-semibold text-gray-700 mb-3">가산점 항목 (남성)</h4>
+                        <div>
+                            <input type="checkbox" id="maleCarBonus" value="2" class="mr-2" data-bonus-group="male-car">
+                            <label for="maleCarBonus" class="text-gray-600">자동차 소유 (+2점)</label>
+                            <input type="checkbox" id="maleLuxuryCarBonus" value="5" class="ml-4 mr-2" data-bonus-group="male-car">
+                            <label for="maleLuxuryCarBonus" class="text-gray-600">고급차 (1억↑, 5年↓) (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="maleParentAssetBonus" value="2" class="mr-2" data-bonus-group="male-parent-asset">
+                            <label for="maleParentAssetBonus" class="text-gray-600">부모님/가족 자산 10억↑ (+2점)</label>
+                            <input type="checkbox" id="maleLuxuryParentAssetBonus" value="5" class="ml-4 mr-2" data-bonus-group="male-parent-asset">
+                            <label for="maleLuxuryParentAssetBonus" class="text-gray-600">부모님/가족 자산 50억↑ (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="maleHeightBonus" value="2" class="mr-2" data-bonus-group="male-height">
+                            <label for="maleHeightBonus" class="text-gray-600">키 175cm↑ (+2점)</label>
+                            <input type="checkbox" id="maleSuperHeightBonus" value="5" class="ml-4 mr-2" data-bonus-group="male-height">
+                            <label for="maleSuperHeightBonus" class="text-gray-600">키 180cm↑ (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="maleWeightBonus" value="2" class="mr-2" data-bonus-group="male-weight">
+                            <label for="maleWeightBonus" class="text-gray-600">몸무게(BMI 정상, 인바디 70↑) (+2점)</label>
+                            <input type="checkbox" id="maleSuperWeightBonus" value="5" class="ml-4 mr-2" data-bonus-group="male-weight">
+                            <label for="maleSuperWeightBonus" class="text-gray-600">몸무게(BMI 정상, 인바디 80↑) (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="malePhotoBonus" value="5" class="mr-2">
+                            <label for="malePhotoBonus" class="text-gray-600">본인 사진 인증 (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="maleCompanyBonus" value="2" class="mr-2" data-bonus-group="male-company">
+                            <label for="maleCompanyBonus" class="text-gray-600">중견기업 정규직 (+2점)</label>
+                            <input type="checkbox" id="maleMajorCompanyBonus" value="5" class="ml-4 mr-2" data-bonus-group="male-company">
+                            <label for="maleMajorCompanyBonus" class="text-gray-600">대기업/공기업 정규직 (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="maleMastersBonus" value="3" class="mr-2" data-bonus-group="male-degree">
+                            <label for="maleMastersBonus" class="text-gray-600">석사 학위 (+3점)</label>
+                            <input type="checkbox" id="malePhDBonus" value="5" class="ml-4 mr-2" data-bonus-group="male-degree">
+                            <label for="malePhDBonus" class="text-gray-600">박사 학위 (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="maleParentJobBonus" value="1" class="mr-2" data-bonus-group="male-parent-job">
+                            <label for="maleParentJobBonus" class="text-gray-600">부모님 직업 (중견기업/일반 공무원) (+1점)</label>
+                            <input type="checkbox" id="maleParentJobBonus2" value="3" class="ml-4 mr-2" data-bonus-group="male-parent-job">
+                            <label for="maleParentJobBonus2" class="text-gray-600">부모님 직업 (전문직/대기업/주요 공무원) (+3점)</label>
+                            <input type="checkbox" id="maleParentJobBonus3" value="5" class="ml-4 mr-2" data-bonus-group="male-parent-job">
+                            <label for="maleParentJobBonus3" class="text-gray-600">부모님 직업 (최상위/상위 직군) (+5점)</label>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-lg font-bold text-gray-800">
+                        남성 핵심 항목 합계: <span id="maleCoreRawTotal" class="text-[#4A6C6F] ml-1 text-2xl">0</span>점<br>
+                        남성 가산점 합계: <span id="maleBonusRawTotal" class="text-[#4A6C6F] ml-1 text-2xl">0</span>점<br>
+                        남성 총점 (120점 만점): <span id="maleTotalScore" class="text-[#4A6C6F] ml-1 text-3xl font-extrabold">0</span>점
+                        <div id="maleTierDisplay" class="ml-2 px-2 py-1 text-sm rounded-full inline-block text-lg font-bold"></div>
+                    </div>
+                </div>
+
+                <!-- 여성 프로필 선택 -->
+                <div class="space-y-6 border-t lg:border-t-0 lg:border-l pt-6 lg:pt-0 lg:pl-8 border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">여성 프로필 설정</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="femaleEducation" class="block font-semibold text-gray-700 mb-2">학력</label>
+                            <select id="femaleEducation" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="femaleJob" class="block font-semibold text-gray-700 mb-2">직업</label>
+                            <select id="femaleJob" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="femaleIncome" class="block font-semibold text-gray-700 mb-2">소득</label>
+                            <select id="femaleIncome" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="femaleAsset" class="block font-semibold text-gray-700 mb-2">개인 자산</label>
+                            <select id="femaleAsset" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="femaleAge" class="block font-semibold text-gray-700 mb-2">나이</label>
+                            <select id="femaleAge" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB88B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="femaleAppearance" class="block font-semibold text-gray-700 mb-2">외모</label>
+                            <select id="femaleAppearance" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#DAB85B] focus:border-transparent">
+                                <option value="" disabled selected>선택하세요</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-8 space-y-4">
+                        <h4 class="text-xl font-semibold text-gray-700 mb-3">가산점 항목 (여성)</h4>
+                        <div>
+                            <input type="checkbox" id="femaleCarBonus" value="2" class="mr-2" data-bonus-group="female-car">
+                            <label for="femaleCarBonus" class="text-gray-600">자동차 소유 (+2점)</label>
+                            <input type="checkbox" id="femaleLuxuryCarBonus" value="5" class="ml-4 mr-2" data-bonus-group="female-car">
+                            <label for="femaleLuxuryCarBonus" class="text-gray-600">고급차 (1억↑, 5년↓) (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="femaleParentAssetBonus" value="2" class="mr-2" data-bonus-group="female-parent-asset">
+                            <label for="femaleParentAssetBonus" class="text-gray-600">부모님/가족 자산 10억↑ (+2점)</label>
+                            <input type="checkbox" id="femaleLuxuryParentAssetBonus" value="5" class="ml-4 mr-2" data-bonus-group="female-parent-asset">
+                            <label for="femaleLuxuryParentAssetBonus" class="text-gray-600">부모님/가족 자산 50억↑ (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="femaleHeightBonus" value="2" class="mr-2">
+                            <label for="femaleHeightBonus" class="text-gray-600">키 165cm↑ (+2점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="femaleWeightBonus" value="2" class="mr-2" data-bonus-group="female-weight">
+                            <label for="femaleWeightBonus" class="text-gray-600">몸무게(BMI 정상, 인바디 70↑) (+2점)</label>
+                            <input type="checkbox" id="femaleSuperWeightBonus" value="5" class="ml-4 mr-2" data-bonus-group="female-weight">
+                            <label for="femaleSuperWeightBonus" class="text-gray-600">몸무게(BMI 정상, 인바디 80↑) (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="femalePhotoBonus" value="5" class="mr-2">
+                            <label for="femalePhotoBonus" class="text-gray-600">본인 사진 인증 (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="femaleCompanyBonus" value="2" class="mr-2" data-bonus-group="female-company">
+                            <label for="femaleCompanyBonus" class="text-gray-600">중견기업 정규직 (+2점)</label>
+                            <input type="checkbox" id="femaleMajorCompanyBonus" value="5" class="ml-4 mr-2" data-bonus-group="female-company">
+                            <label for="femaleMajorCompanyBonus" class="text-gray-600">대기업/공기업 정규직 (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="femaleBeautyModelBonus" value="5" class="mr-2">
+                            <label for="femaleBeautyModelBonus" class="text-gray-600">미인대회/모델 경력 (+5점)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="femaleParentJobBonus" value="1" class="mr-2" data-bonus-group="female-parent-job">
+                            <label for="femaleParentJobBonus" class="text-gray-600">부모님 직업 (중견기업/일반 공무원) (+1점)</label>
+                            <input type="checkbox" id="femaleParentJobBonus2" value="3" class="ml-4 mr-2" data-bonus-group="female-parent-job">
+                            <label for="femaleParentJobBonus2" class="text-gray-600">부모님 직업 (전문직/대기업/주요 공무원) (+3점)</label>
+                            <input type="checkbox" id="femaleParentJobBonus3" value="5" class="ml-4 mr-2" data-bonus-group="female-parent-job">
+                            <label for="femaleParentJobBonus3" class="text-gray-600">부모님 직업 (최상위/상위 직군) (+5점)</label>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-lg font-bold text-gray-800">
+                        여성 핵심 항목 합계: <span id="femaleCoreRawTotal" class="text-[#4A6C6F] ml-1 text-2xl">0</span>점<br>
+                        여성 가산점 합계: <span id="femaleBonusRawTotal" class="text-[#4A6C6F] ml-1 text-2xl">0</span>점<br>
+                        여성 총점 (120점 만점): <span id="femaleTotalScore" class="text-[#4A6C6F] ml-1 text-3xl font-extrabold">0</span>점
+                        <div id="femaleTierDisplay" class="ml-2 px-2 py-1 text-sm rounded-full inline-block text-lg font-bold"></div>
+                    </div>
+                </div>
+
+                <!-- 최종 결과 요약 및 공통 버튼 -->
+                <div class="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 border border-gray-200 lg:col-span-2 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-600 mb-2">시뮬레이션 결과 요약</h3>
+                    <div class="text-center mt-4 w-full">
+                        <p class="text-xl font-bold text-gray-700 mb-2">남성 프로필 티어: <span id="maleProfileTier" class="text-[#4A6C6F]"></span></p>
+                        <p class="text-xl font-bold text-gray-700 mb-2">여성 프로필 티어: <span id="femaleProfileTier" class="text-[#4A6C6F]"></span></p>
+                        <p class="text-xl font-bold text-gray-700 mb-2">남성 기준 여성 매칭 상태: <span id="malePerspectiveStatus" class="ml-2 px-2 py-1 text-sm rounded-full inline-block"></span></p>
+                        <p class="text-xl font-bold text-gray-700 mb-2">여성 기준 남성 매칭 상태: <span id="femalePerspectiveStatus" class="ml-2 px-2 py-1 text-sm rounded-full inline-block"></span></p>
+                    </div>
+                    <button id="calculateAllBtn" class="mt-8 px-8 py-4 bg-[#4A6C6F] text-white font-bold text-xl rounded-lg shadow-lg hover:bg-[#333333] transition-colors">결과 확인</button>
+                </div>
+            </div>
+
+            <div class="mt-12 p-6 bg-blue-50 rounded-xl border border-blue-200 text-gray-700 text-center">
+                <h3 class="text-xl font-bold mb-4 text-blue-800">매칭 등급 기준 설명</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                    <div>
+                        <p class="font-semibold text-base mb-2">개인 프로필 등급 (최종 개인 총점 120점 만점 기준)</p>
+                        <ul class="list-disc list-inside space-y-1 text-sm">
+                            <li><strong class="tier-royal px-2 py-1 rounded-full">로얄 클래스 (Royal Class)</strong>: 117-120점</li>
+                            <li><strong class="tier-prestige px-2 py-1 rounded-full">프레스티지 클래스 (Prestige Class)</strong>: 110-116점</li>
+                            <li><strong class="tier-diamond px-2 py-1 rounded-full">다이아몬드 클래스 (Diamond Class)</strong>: 100-109점</li>
+                            <li><strong class="tier-platinum px-2 py-1 rounded-full">플래티넘 클래스 (Platinum Class)</strong>: 90-99점</li>
+                            <li><strong class="tier-gold px-2 py-1 rounded-full">골드 클래스 (Gold Class)</strong>: 75-89점</li>
+                            <li><strong class="tier-silver px-2 py-1 rounded-full">실버 클래스 (Silver Class)</strong>: 55-74점</li>
+                            <li><strong class="tier-prime px-2 py-1 rounded-full">프라임 클래스 (Prime Class)</strong>: 30-54점</li>
+                            <li><strong class="tier-basic px-2 py-1 rounded-full">베이직 클래스 (Basic Class)</strong>: 0-29점</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-base mb-2">각 티어 등급에서의 매칭 상태</p>
+                        <ul class="list-disc list-inside space-y-1 text-sm">
+                            <li><strong class="text-green-600">상향 매칭!</strong>: 매칭된 상대방의 티어 등급이 자신의 티어 등급보다 1단계 이상 높을 경우.</li>
+                            <li><strong class="text-gray-700">정상 매칭!</strong>: 매칭된 상대방의 티어 등급이 자신의 티어 등급과 동일할 경우.</li>
+                            <li><strong class="text-red-600">하향 매칭!</strong>: 매칭된 상대방의 티어 등급이 자신의 티어 등급보다 1단계 이상 낮을 경우.</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">
+                    (점수 기준은 시뮬레이션의 이해를 돕기 위한 예시이며, 실제 앱에서는 세부적인 통계 분석을 통해 확정됩니다.)
+                </p>
+            </div>
+
+            <!-- 세부 항목별 점수 및 산정 방식 -->
+            <div class="mt-12 p-6 bg-white rounded-xl shadow-lg">
+                <h3 class="text-2xl font-bold text-center mb-6 text-[#4A6C6F]">세부 항목별 점수 및 산정 방식</h3>
+                
+                <!-- 학력 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">1. 학력 (남성 최대 20점 / 여성 최대 23.75점)</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-700 font-bold mb-2">인증 방법: 졸업장/졸업증명서 업로드 (엄격한 인증), 대학 이메일 인증 (완화된 인증, 보조 수단).</p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">남성 학력 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**20점:** 세계 최상위권 대학 (QS/THE 랭킹 기준 Top 10: 예, Harvard, Stanford, MIT, Oxford, Cambridge 등) 학사 학위</li>
+                                    <li>**18점:** 국내 대학 순위(1~5위): SKY(서울대, 연세대, 고려대)/KAIST/POSTECH 학사, 세계 Top 50 대학 (QS/THE 랭킹 기준) 학사 학위</li>
+                                    <li>**17점:** 국내 대학 순위(6~8위) 학사, 세계 Top 100 대학 (QS/THE 랭킹 기준) 학사 학위</li>
+                                    <li>**15점:** 국내 대학 순위(9~20위) 학사</li>
+                                    <li>**13점:** 국내 대학 순위(21~50위) 학사 또는 기타 해외 명문/주요 대학 학사 학위</li>
+                                    <li>**11점:** 일반 4년제 대학 학사</li>
+                                    <li>**8점:** 전문학사</li>
+                                    <li>**5점:** 고졸 이상</li>
+                                    <li>**2점:** 고졸 검정고시</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">여성 학력 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**23.75점:** 세계 최상위권 대학 (QS/THE 랭킹 기준 Top 10) 학사 학위</li>
+                                    <li>**21점:** 국내 대학 순위(1~5위): SKY/KAIST/POSTECH 학사, 세계 Top 50 대학 학사</li>
+                                    <li>**19점:** 국내 대학 순위(6~8위) 학사, 세계 Top 100 대학 학사</li>
+                                    <li>**17점:** 국내 대학 순위(9~20위) 학사</li>
+                                    <li>**15점:** 국내 대학 순위(21~50위) 학사 또는 기타 해외 명문/주요 대학 학사 학위</li>
+                                    <li>**13점:** 일반 4년제 대학 학사</li>
+                                    <li>**10점:** 전문학사</li>
+                                    <li>**8점:** 고졸 이상</li>
+                                    <li>**4점:** 고졸 검정고시</li>
+                                </ul>
                             </div>
                         </div>
+                        <p class="text-gray-700 text-sm mt-4">**근거:** 한국 사회에서 최고 학위와 명문대 학위는 지적 능력과 사회적 성공의 강력한 지표로 인정됩니다. 세계 유수의 대학 학위는 글로벌 경쟁력과 전문성을 나타내며, 엘리트 그룹 진입의 중요한 기준입니다. 여성의 경우 학력은 사회적 안정성 및 지위의 중요한 요소로 작용합니다. \[6], \[38], \[39]</p>
                     </div>
-                     <!-- Female Result Card -->
-                    <div id="female-result-card-wrapper">
-                        <div id="female-result-card" class="text-center p-6 rounded-t-xl">
-                            <h3 class="text-2xl font-bold mb-2">여성 점수</h3>
-                            <p id="female-score" class="text-5xl font-bold mb-2"></p>
-                            <p id="female-tier" class="text-2xl font-semibold px-4 py-1 rounded-full inline-block"></p>
-                        </div>
-                        <div id="female-calculation-details" class="text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2">
-                            <h4 class="font-bold text-lg mb-2 text-center">점수 계산 과정</h4>
-                             <div class="text-sm space-y-2">
-                                <p>1. <strong>핵심 원점수:</strong> <span id="female-core-raw-score" class="font-semibold"></span> / 175.0</p>
-                                <p>2. <strong>가산점 원점수:</strong> <span id="female-bonus-raw-score" class="font-semibold"></span> / 32.0</p>
-                                <div class="mt-2 pt-2 border-t">
-                                    <p class="font-semibold">3. 최종 점수 계산:</p>
-                                    <div class="text-xs pl-4 mt-1 space-y-1">
-                                        <p>핵심 점수: (<span id="female-core-raw-score-2"></span>/175) * 100 = <span id="female-core-normalized-score" class="font-bold"></span>점</p>
-                                        <p>가산점: (<span id="female-bonus-raw-score-2"></span>/32) * 20 = <span id="female-bonus-normalized-score" class="font-bold"></span>점</p>
-                                        <p class="mt-2 text-base"><strong>총점:</strong> <span id="female-core-normalized-score-2" class="font-bold"></span> + <span id="female-bonus-normalized-score-2" class="font-bold"></span> = <span id="female-final-score-calc" class="text-xl font-bold text-red-600"></span>점</p>
-                                    </div>
-                                </div>
+                </div>
+
+                <!-- 직업 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">2. 직업 (남성 최대 30점 / 여성 최대 31.25점)</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-700 font-bold mb-2">인증 방법: 재직증명서, 원천징수영수증 (엄격한 인증), 명함, 회사 이메일/아이디태그 (완화된 인증, 보조 수단). 개인사업자는 사업자등록증, 소득금액증명원.</p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">남성 직업 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**30점:** 최상위 직군: 개인 3급 공무원 이상 고위 공무원 (차관급 이상), 국회의원, 지자체장 (광역단체장 이상), 유명 연예인 (광고 모델 브랜드 평판 지수 상위 20위 이내), 인플루언서 (구독자 100만 명 이상), 병원장 이상급 (상급종합병원/대형병원), 프로 스포츠맨 (올림픽 메달리스트, 월드컵/월드시리즈/챔피언스리그 등 국제대회 우승 주역, 국대급 스타), KOSPI, KOSDAQ 상장사 대표 (CEO/창업주)</li>
+                                    <li>**27점:** 상위 직군: 개인 5급 공무원 (사무관급), 프로 스포츠맨 (국가대표급, 국제대회 출전 경력), 성형외과/피부과 의사 (개원 또는 주요 병원 재직), 기업 CEO (매출 40억 이상, 비상장 우량 기업), 대학교 총장/학장 (4년제 대학교), 외교관 (외무고시 합격자), 인플루언서 (구독자 50만 명 이상 \~ 100만 명 미만)</li>
+                                    <li>**25점:** 전문직: 변리사, 의사 (성형외과/피부과 제외, 개원 또는 병원 재직), 치과의사, 변호사, 회계사, 세무사, 약사, 수의사, 한의사, 대학교수 (정교수, 부교수, 조교수 - 시간제/기간제 강사 제외)</li>
+                                    <li>**20점:** 대기업/주요 공무원: 국내 4대 그룹(삼성, 현대차, SK, LG) 계열사 정규직, 기타 주요 대기업(자산 10조 이상 그룹사 등) 정규직, 주요 공기업(시장형 공기업) 정규직, 국공립 연구원(정규직), 주요 언론사(정규직), 주요 금융권(은행, 증권사 정규직), 주요 외국계 기업(포춘 500대 기업 등) 정규직, 6급 공무원 (주사급), 기업 CEO (매출 20억 이상, 비상장 우량 기업), 프로 스포츠맨 (국내 리그/지역 대표급)</li>
+                                    <li>**15점:** 중견기업/일반 공무원: 중견기업 정규직, 7급 공무원 (주사보급), 관세사, 법무사, 행정사</li>
+                                    <li>**8점:** 중소기업/고소득 프리랜서/자영업: 중소기업(정규직), 프리랜서(연 소득 7천만 원 이상), 자영업(연 매출 3억 이상)</li>
+                                    <li>**4점:** 기타: 계약직, 아르바이트, 취업 준비생, 프리랜서(연 소득 7천만 원 미만), 자영업(연 매출 3억 미만)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">여성 직업 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**31.25점:** 최상위 직군: 개인 3급 공무원 이상 고위 공무원 (차관급 이상), 국회의원, 지자체장 (광역단체장 이상), 유명 연예인 (광고 모델 브랜드 평판 지수 상위 20위 이내), 인플루언서 (구독자 100만 명 이상), 병원장 이상급 (상급종합병원/대형병원), 프로 스포츠맨 (올림픽 메달리스트, 월드컵/월드시리즈/챔피언스리그 등 국제대회 우승 주역, 국대급 스타), KOSDAC, KOSPI 상장사 대표 (CEO/창업주)</li>
+                                    <li>**28점:** 상위 직군: 개인 5급 공무원 (사무관급), 프로 스포츠맨 (국가대표급, 국제대회 출전 경력), 성형외과/피부과 의사 (개원 또는 주요 병원 재직), 기업 CEO (매출 40억 이상, 비상장 우량 기업), 대학교 총장/학장 (4년제 대학교), 외교관 (외무고시 합격자), 인플루언서 (구독자 50만 명 이상 \~ 100만 명 미만)</li>
+                                    <li>**26점:** 전문직: 변리사, 의사 (성형외과/피부과 제외, 개원 또는 병원 재직), 치과의사, 변호사, 회계사, 세무사, 약사, 수비사, 한의사, 대학교수 (정교수, 부교수, 조교수 - 시간제/기간제 강사 제외)</li>
+                                    <li>**21점:** 대기업/주요 공무원: 국내 4대 그룹(삼성, 현대차, SK, LG) 계열사 정규직, 기타 주요 대기업(자산 10조 이상 그룹사 등) 정규직, 주요 공기업(시장형 공기업) 정규직, 국공립 연구원(정규직), 주요 언론사(정규직), 주요 금융권(은행, 증권사 정규직), 주요 외국계 기업(포춘 500대 기업 등) 정규직, 6급 공무원 (주사급), 기업 CEO (매출 20억 이상, 비상장 우량 기업), 프로 스포츠맨 (국내 리그/지역 대표급)</li>
+                                    <li>**16점:** 중견기업/일반 공무원: 중견기업 정규직, 7급 공무원 (주사보급), 관세사, 법무사, 한의사, 행정사</li>
+                                    <li>**8점:** 중소기업/고소득 프리랜서/자영업: 중소기업(정규직), 프리랜서(연 소득 7천만 원 이상), 자영업(연 매출 3억 이상)</li>
+                                    <li>**4점:** 기타: 계약직, 아르바이트, 취업 준비생, 프리랜서(연 소득 7천만 원 미만), 자영업(연 매출 3억 미만)</li>
+                                </ul>
                             </div>
                         </div>
+                        <p class="text-gray-700 text-sm mt-4">**근거:** 한국 사회에서 최상위권의 사회적 명성과 수입, 안정성을 보장하며, 높은 전문성과 사회적 기여도를 인정받는 직업군입니다. 남성에게 직업적 성공은 배우자 선택에서 특히 중요한 요소로 강조됩니다. 여성의 경우 직업적 성취는 자립심과 사회적 기여도를 나타내며, 배우자 선택에서 중요하게 고려됩니다. \[5], \[41], \[42]</p>
                     </div>
                 </div>
-                 <div id="match-result" class="mt-6 text-center">
-                    <h3 class="text-2xl font-bold mb-4 text-gray-800">매칭 상태 분석</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div id="male-match-status" class="p-4 bg-gray-100 rounded-lg"></div>
-                        <div id="female-match-status" class="p-4 bg-gray-100 rounded-lg"></div>
+
+                <!-- 소득 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">3. 소득 (남성 최대 27.5점 / 여성 최대 21.25점)</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-700 font-bold mb-2">인증 방법: 원천징수영수증, 급여명세서, 소득금액증명원.</p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">남성 소득 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**27.50점:** 연봉 2억 이상</li>
+                                    <li>**23점:** 연봉 1억 5천만 원 이상 \~ 2억 미만</li>
+                                    <li>**18점:** 연봉 1억 원 이상 \~ 1억 5천만 원 미만</li>
+                                    <li>**14점:** 연봉 7천만 원 이상 \~ 1억 원 미만</li>
+                                    <li>**9점:** 연봉 5천만 원 이상 \~ 7천만 원 미만</li>
+                                    <li>**5점:** 연봉 3천만 원 이상 \~ 5천만 원 미만</li>
+                                    <li>**2점:** 연봉 3천만 원 미만</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">여성 소득 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**21.25점:** 연봉 2억 이상</li>
+                                    <li>**18점:** 연봉 1억 5천만 원 이상 \~ 2억 미만</li>
+                                    <li>**14점:** 연봉 1억 원 이상 \~ 1억 5천만 원 미만</li>
+                                    <li>**11점:** 연봉 7천만 원 이상 \~ 1억 원 미만</li>
+                                    <li>**7점:** 연봉 5천만 원 이상 \~ 7천만 원 미만</li>
+                                    <li>**4점:** 연봉 3천만 원 이상 \~ 5천만 원 미만</li>
+                                    <li>**1점:** 연봉 3천만 원 미만</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 text-sm mt-4">**근거:** 극히 소수의 고소득층에 해당하며, 압도적인 경제적 능력을 나타냅니다. 남성의 소득은 가족 부양 능력과 직결되어 배우자 선택에서 매우 중요하게 평가됩니다. 여성에게도 높은 소득은 경제적 자립도와 사회적 성공을 나타내며, 이는 배우자 선택에서 긍정적인 요소로 작용합니다. \[45], \[48], \[49]</p>
+                    </div>
+                </div>
+
+                <!-- 개인 자산 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">4. 개인 자산 (남성 최대 22.5점 / 여성 최대 23.75점)</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-700 font-bold mb-2">인증 방법: 부동산등기부등본, 주식 잔고 증명서, 예금 잔액 증명서. (주식/예금은 변동성을 고려하여 특정 시점의 '잔액 증명서'를 요구하며, 계좌 캡처는 조작 가능성 때문에 지양합니다.) 부채 증명서는 선택 사항이나, 평가 시 부채를 차감하여 순자산을 계산합니다.</p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">남성 개인 자산 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**22.50점:** 순자산 10억 이상</li>
+                                    <li>**19점:** 순자산 5억 이상 \~ 10억 미만</li>
+                                    <li>**15점:** 순자산 3억 이상 \~ 5억 미만</li>
+                                    <li>**11점:** 순자산 1억 이상 \~ 3억 미만</li>
+                                    <li>**8점:** 순자산 5천만 원 이상 \~ 1억 미만</li>
+                                    <li>**4점:** 순자산 1천만 원 이상 \~ 5천만 원 미만</li>
+                                    <li>**2점:** 순자산 1천만 원 미만</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">여성 개인 자산 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**23.75점:** 순자산 10억 이상</li>
+                                    <li>**20점:** 순자산 5억 이상 \~ 10억 미만</li>
+                                    <li>**16점:** 순자산 3억 이상 \~ 5억 미만</li>
+                                    <li>**12점:** 순자산 1억 이상 \~ 3억 미만</li>
+                                    <li>**9점:** 순자산 5천만 원 이상 \~ 1억 미만</li>
+                                    <li>**4점:** 순자산 1천만 원 이상 \~ 5천만 원 미만</li>
+                                    <li>**2점:** 순자산 1천만 원 미만</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 text-sm mt-4">**근거:** 최상위 자산가 그룹에 속하며, 압도적인 재정적 자유와 사회적 영향력을 의미합니다. 남성의 자산은 미래의 안정성과 생활 수준을 보장하는 핵심 요소입니다. 여성에게도 순자산은 경제적 독립성과 사회적 영향력을 나타냅니다. \[47], \[50]</p>
+                    </div>
+                </div>
+
+                <!-- 나이 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">5. 나이 (남성 최대 15점 / 여성 최대 35점)</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-700 font-bold mb-2">인증 방법: 신분증 기반 자동 확인.</p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">남성 나이 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**15점:** 20대 후반 \~ 30대 초반 (만 26세 \~ 만 33세)</li>
+                                    <li>**12점:** 30대 중반 \~ 30대 후반 (만 34세 \~ 만 39세)</li>
+                                    <li>**8점:** 40대 초반 \~ 40대 중반 (만 40세 \~ 만 45세)</li>
+                                    <li>**4점:** 40대 후반 이상 (만 46세 이상)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">여성 나이 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**35점:** 20대 중반 (만 24세 \~ 만 27세)</li>
+                                    <li>**30점:** 20대 후반 (만 28세 \~ 만 29세)</li>
+                                    <li>**25점:** 30대 초반 (만 30세 \~ 만 33세)</li>
+                                    <li>**18점:** 30대 중반 (만 34세 \~ 만 36세)</li>
+                                    <li>**10점:** 30대 후반 (만 37세 \~ 만 39세)</li>
+                                    <li>**5점:** 40대 이상 (만 40세 이상)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 text-sm mt-4">**근거:** 남성/여성에게 가장 선호되는 결혼 적령기는 사회적 안정성과 활력이 가장 높은 시기로 평가됩니다. 연령이 증가함에 따라 사회적 기반이 견고해지지만, 결혼 시장에서의 선호도는 점차 감소하는 경향을 보입니다. \[출처 필요]</p>
+                    </div>
+                </div>
+
+                <!-- 외모 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">6. 외모 (남성 최대 20점 / 여성 최대 40점)</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-700 font-bold mb-2">인증 방법: 본인 사진 업로드 (공개용 노필터 사진) 및 코디네이터 패널 직접 평가.</p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">남성 외모 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**20점:** 코디네이터 평가 상위 5% (연예인급 외모)</li>
+                                    <li>**18점:** 코디네이터 평가 상위 20% (매우 매력적인 외모)</li>
+                                    <li>**13점:** 코디네이터 평가 평균 이상 (매력적인 외모)</li>
+                                    <li>**8점:** 코디네이터 평가 평균 (보통의 외모)</li>
+                                    <li>**3점:** 코디네이터 평가 평균 이하 (개선이 필요한 외모)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">여성 외모 배점</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**40점:** 코디네이터 평가 상위 5% (연예인급 외모)</li>
+                                    <li>**35점:** 코디네이터 평가 상위 20% (매우 매력적인 외모)</li>
+                                    <li>**25점:** 코디네이터 평가 평균 이상 (매력적인 외모)</li>
+                                    <li>**15점:** 코디네이터 평가 평균 (보통의 외모)</li>
+                                    <li>**5점:** 코디네이터 평가 평균 이하 (개선이 필요한 외모)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 text-sm mt-4">**근거:** 매우 희소하며, 압도적인 시각적 매력을 제공합니다. 남성의 외모는 전반적인 매력도에 기여하며, 특히 초반 인상 형성에 중요합니다. 여성의 외모는 한국 사회에서 배우자 선택 시 가장 중요한 요소 중 하나로 강조됩니다. \[7]</p>
+                    </div>
+                </div>
+
+                <!-- 가산점 항목 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">7. 가산점 항목 (총 20점 만점 정규화)</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-700 font-bold mb-2">획득한 가산점 합산 점수는 최대 20점으로 정규화되어 최종 총점에 반영됩니다.</p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">공통 가산점 항목 (남성 최대 35점 / 여성 최대 32점)</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**차:**
+                                        <ul>
+                                            <li>+5점: 1억 원 이상, 연식 5년 이내의 Mercedes-Benz, BMW, Audi, Volvo, Porsche 이상 제조사 차량 소유</li>
+                                            <li>+2점: 자동차 소유</li>
+                                        </ul>
+                                    </li>
+                                    <li>**부모님 또는 가족 자산:**
+                                        <ul>
+                                            <li>+5점: 가족 순자산 50억 이상</li>
+                                            <li>+2점: 가족 순자산 10억 이상</li>
+                                        </ul>
+                                    </li>
+                                    <li>**키:**
+                                        <ul>
+                                            <li>남성 +5점: 180cm 이상</li>
+                                            <li>남성 +2점: 175cm 이상 / 여성 +2점: 165cm 이상</li>
+                                        </ul>
+                                    </li>
+                                    <li>**몸무게:**
+                                        <ul>
+                                            <li>+5점: BMI 지수 18.5 \~ 22.9 (정상 범위) & 인바디 점수 80점 이상 (건강한 체성분)</li>
+                                            <li>+2점: BMI 지수 18.5 \~ 24.9 (정상\~과체중 경계) & 인바디 점수 70점 이상 (양호한 체성분)</li>
+                                        </ul>
+                                    </li>
+                                    <li>**본인사진 인증 - 공개용 노필터 사진:** +5점</li>
+                                    <li>**회사 인증:**
+                                        <ul>
+                                            <li>+5점: 대기업/주요 공기업 재직</li>
+                                            <li>+2점: 중견기업/공무원 재직</li>
+                                        </ul>
+                                    </li>
+                                    <li>**부모님 직업:**
+                                        <ul>
+                                            <li>+5점: 부모님 중 1인 이상이 최상위 직군 또는 상위 직군</li>
+                                            <li>+3점: 부모님 중 1인 이상이 전문직 또는 대기업/주요 공무원</li>
+                                            <li>+1점: 부모님 중 1인 이상이 중견기업/일반 공무원</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">남성 전용 가산점 항목</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**박사/석사 학위:**
+                                        <ul>
+                                            <li>+5점: 박사 학위</li>
+                                            <li>+3점: 석사 학위</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                <h5 class="font-semibold text-gray-700 mb-2 mt-4">여성 전용 가산점 항목</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>**미인대회/모델 경력:** +5점</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 text-sm mt-4">**근거:** 가산점 항목들은 개인의 추가적인 매력과 사회적 가치를 나타내는 요소로 작용합니다. 각 항목은 공신력 있는 증빙 자료를 통해 엄격하게 인증됩니다. 부모님 직업은 개인의 성장 배경과 잠재적 경제적 지원 가능성을 나타내는 중요한 지표입니다.</p>
+                    </div>
+                </div>
+
+                <!-- 점수 산정 방식 섹션 -->
+                <div class="mb-6">
+                    <div class="collapsible-header">
+                        <h4 class="text-xl font-semibold text-gray-800">점수 산정 방식</h4>
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="collapsible-content">
+                        <h5 class="font-semibold text-gray-700 mb-2">남성 프로필 총점 산출 (120점 만점)</h5>
+                        <ul class="list-disc list-inside text-gray-600 text-sm space-y-1 mb-4">
+                            <li>**남성 핵심 항목 구성 (최대 원점수 합계: 135.0점):** 학력(20점), 직업(30점), 소득(27.5점), 자산(22.5점), 나이(15점), 외모(20점)</li>
+                            <li>**남성 가산점 항목 (최대 원점수 합계: 40점):** 차(+5), 부모님/가족 자산(+5), 키(+5), 몸무게(+5), 본인사진 인증(+5), 회사 인증(+5), 박사/석사 학위(+5), 부모님 직업(+5)</li>
+                            <li>**총점 계산 알고리즘:**
+                                <ol class="list-decimal list-inside ml-4">
+                                    <li>**핵심 항목 원점수 합산:** `획득한 학력 점수 + 획득한 직업 점수 + 획득한 소득 점수 + 획득한 자산 점수 + 획득한 나이 점수 + 획득한 외모 점수`</li>
+                                    <li>**획득한 가산점 합산:** `획득한 가산점 합산` (각 가산점 항목에서 획득한 점수의 총합)</li>
+                                    <li>**가산점 20점 만점 정규화:** `(획득한 가산점 합산 / 40.0) * 20.0` (최대 20점)</li>
+                                    <li>**100점 만점 핵심 항목 정규화:** `(핵심 항목 원점수 합산 / 135.0) * 100` (최대 100점)</li>
+                                    <li>**최종 남성 총점 (120점 만점):** `(100점 만점 핵심 항목 정규화 점수) + (가산점 20점 만점 정규화 점수)`</li>
+                                </ol>
+                            </li>
+                        </ul>
+
+                        <h5 class="font-semibold text-gray-700 mb-2">여성 프로필 총점 산출 (120점 만점)</h5>
+                        <ul class="list-disc list-inside text-gray-600 text-sm space-y-1 mb-4">
+                            <li>**여성 핵심 항목 구성 (최대 원점수 합계: 175.0점):** 학력(23.75점), 직업(31.25점), 소득(21.25점), 자산(23.75점), 나이(35점), 외모(40점)</li>
+                            <li>**여성 가산점 항목 (최대 원점수 합계: 37점):** 차(+5), 부모님/가족 자산(+5), 키(+2), 몸무게(+5), 본인사진 인증(+5), 회사 인증(+5), 미인대회/모델 경력(+5), 부모님 직업(+5)</li>
+                            <li>**총점 계산 알고리즘:**
+                                <ol class="list-decimal list-inside ml-4">
+                                    <li>**핵심 항목 원점수 합산:** `획득한 학력 점수 + ... + 획득한 외모 점수`</li>
+                                    <li>**획득한 가산점 합산:** `획득한 가산점 합산` (각 가산점 항목에서 획득한 점수의 총합)</li>
+                                    <li>**가산점 20점 만점 정규화:** `(획득한 가산점 합산 / 37.0) * 20.0` (최대 20점)</li>
+                                    <li>**100점 만점 핵심 항목 정규화:** `(핵심 항목 원점수 합산 / 175.0) * 100` (최대 100점)</li>
+                                    <li>**최종 여성 총점 (120점 만점):** `(100점 만점 핵심 항목 정규화 점수) + (가산점 20점 만점 정규화 점수)`</li>
+                                </ol>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Tier Grade Table -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">티어 등급 점수표</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">티어</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">점수 범위 (120점 만점)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200 text-center">
-                        <tr><td class="px-6 py-4 font-semibold tier-platinum">플래티넘</td><td class="px-6 py-4">110-120점</td></tr>
-                        <tr><td class="px-6 py-4 font-semibold tier-gold">골드</td><td class="px-6 py-4">90-109점</td></tr>
-                        <tr><td class="px-6 py-4 font-semibold tier-silver">실버</td><td class="px-6 py-4">70-89점</td></tr>
-                        <tr><td class="px-6 py-4 font-semibold tier-bronze">브론즈</td><td class="px-6 py-4">50-69점</td></tr>
-                        <tr><td class="px-6 py-4 font-semibold tier-general">일반</td><td class="px-6 py-4">0-49점</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Detailed Criteria Section -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">세부 점수 기준표</h2>
-            <div class="space-y-4">
-                <details><summary class="font-semibold text-xl cursor-pointer hover:text-indigo-600">1. 학력</summary><div class="mt-2 p-4 bg-gray-50 rounded-lg overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead>...</thead><tbody>...</tbody></table></div></details>
-                <details open><summary class="font-semibold text-xl cursor-pointer hover:text-indigo-600">2. 직업</summary>
-                    <div class="mt-2 p-4 bg-gray-50 rounded-lg overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-100"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">항목</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">세부 내용</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">남성(30)</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">여성(31.25)</th></tr></thead>
-                            <tbody class="bg-white divide-y divide-gray-200 text-sm">
-                                <tr><td class="px-4 py-3 font-semibold">최상위 직군</td><td class="px-4 py-3">국회의원, 광역단체장, 차관급 이상 공무원, Top 연예인/인플루언서(100만+), 대형병원장, 국제대회 우승 스포츠 스타, 상장사 대표</td><td class="px-4 py-3">30.0</td><td class="px-4 py-3">31.25</td></tr>
-                                <tr><td class="px-4 py-3 font-semibold">상위 직군</td><td class="px-4 py-3">5급 공무원, 국대급 스포츠맨, 성형/피부과 의사, CEO(매출 40억+), 4년제 대학 총장/학장, 외교관, 인플루언서(50만+)</td><td class="px-4 py-3">27.0</td><td class="px-4 py-3">28.0</td></tr>
-                                <tr><td class="px-4 py-3 font-semibold">전문직</td><td class="px-4 py-3">변리사, 의사, 치과의사, 변호사, 회계사, 세무사, 약사, 수의사, 한의사, 대학교수(정교수 등)</td><td class="px-4 py-3">25.0</td><td class="px-4 py-3">26.0</td></tr>
-                                <tr><td class="px-4 py-3 font-semibold">대기업/주요 공무원</td><td class="px-4 py-3">4대 그룹 정규직, 주요 대기업/공기업/금융권/언론사/외국계 정규직, 6급 공무원, CEO(매출 20억+), 지역대표급 스포츠맨</td><td class="px-4 py-3">20.0</td><td class="px-4 py-3">21.0</td></tr>
-                                <tr><td class="px-4 py-3 font-semibold">중견기업/일반 공무원</td><td class="px-4 py-3">중견기업 정규직, 7급 공무원, 관세사, 법무사, 행정사</td><td class="px-4 py-3">15.0</td><td class="px-4 py-3">16.0</td></tr>
-                                <tr><td class="px-4 py-3 font-semibold">중소기업/고소득 프리랜서/자영업</td><td class="px-4 py-3">중소기업 정규직, 프리랜서(연 7천만+), 자영업(연 매출 3억+)</td><td class="px-4 py-3">8.0</td><td class="px-4 py-3">8.0</td></tr>
-                                <tr><td class="px-4 py-3 font-semibold">기타</td><td class="px-4 py-3">계약직, 아르바이트, 취준생, 프리랜서(연 7천만-), 자영업(연 매출 3억-)</td><td class="px-4 py-3">4.0</td><td class="px-4 py-3">4.0</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </details>
-                <details><summary class="font-semibold text-xl cursor-pointer hover:text-indigo-600">3. 소득</summary><div class="mt-2 p-4 bg-gray-50 rounded-lg overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead>...</thead><tbody>...</tbody></table></div></details>
-                <details><summary class="font-semibold text-xl cursor-pointer hover:text-indigo-600">4. 개인 자산</summary><div class="mt-2 p-4 bg-gray-50 rounded-lg overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead>...</thead><tbody>...</tbody></table></div></details>
-                <details><summary class="font-semibold text-xl cursor-pointer hover:text-indigo-600">5. 나이</summary><div class="mt-2 p-4 bg-gray-50 rounded-lg overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead>...</thead><tbody>...</tbody></table></div></details>
-                <details><summary class="font-semibold text-xl cursor-pointer hover:text-indigo-600">6. 외모</summary><div class="mt-2 p-4 bg-gray-50 rounded-lg overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead>...</thead><tbody>...</tbody></table></div></details>
-                <details><summary class="font-semibold text-xl cursor-pointer hover:text-indigo-600">7. 가산점 항목</summary><div class="mt-2 p-4 bg-gray-50 rounded-lg"><p class="text-sm text-gray-600">각 항목별 최대 5점, 총점은 20점 만점으로 정규화됩니다.</p></div></details>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script>
-        const scoreData = {
-            male: {
-                core: {
-                    education: [ { text: 'QS/THE Top 10 학사', value: 20 }, { text: 'SKY/KAIST/POSTECH, QS/THE Top 50 학사', value: 18 }, { text: '국내 6-8위, QS/THE Top 100 학사', value: 17 }, { text: '국내 9-20위 학사', value: 15 }, { text: '일반 4년제/기타 해외대 학사', value: 13 }, { text: '전문학사', value: 10 }, { text: '고졸 이상', value: 7 }, { text: '고졸 검정고시', value: 2 }, ],
-                    profession: [ { text: '최상위 직군', value: 30 }, { text: '상위 직군', value: 27 }, { text: '전문직', value: 25 }, { text: '대기업/주요 공무원', value: 20 }, { text: '중견기업/일반 공무원', value: 15 }, { text: '중소기업/고소득 프리랜서/자영업', value: 8 }, { text: '기타', value: 4 }, ],
-                    income: [ { text: '연봉 2억 이상', value: 27.5 }, { text: '연봉 1.5억 ~ 2억', value: 23 }, { text: '연봉 1억 ~ 1.5억', value: 18 }, { text: '연봉 7천 ~ 1억', value: 14 }, { text: '연봉 5천 ~ 7천', value: 9 }, { text: '연봉 3천 ~ 5천', value: 5 }, { text: '연봉 3천 미만', value: 2 }, ],
-                    asset: [ { text: '순자산 10억 이상', value: 22.5 }, { text: '순자산 5억 ~ 10억', value: 19 }, { text: '순자산 3억 ~ 5억', value: 15 }, { text: '순자산 1억 ~ 3억', value: 11 }, { text: '순자산 5천 ~ 1억', value: 8 }, { text: '순자산 1천 ~ 5천', value: 4 }, { text: '순자산 1천 미만', value: 2 }, ],
-                    age: [ { text: '만 26세 ~ 33세', value: 15 }, { text: '만 34세 ~ 39세', value: 12 }, { text: '만 40세 ~ 45세', value: 8 }, { text: '만 46세 이상', value: 4 }, ],
-                    appearance: [ { text: '상위 5% (연예인급)', value: 20 }, { text: '상위 20% (매우 매력적)', value: 18 }, { text: '평균 이상 (매력적)', value: 13 }, { text: '평균 (보통)', value: 8 }, { text: '평균 이하 (개선 필요)', value: 3 }, ],
-                },
-                bonus: {
-                    car: [ { text: '해당 없음', value: 0 }, { text: '차량 소유', value: 2 }, { text: '1억 이상 고급차', value: 5 } ],
-                    family_asset: [ { text: '해당 없음', value: 0 }, { text: '가족 순자산 10억 이상', value: 2 }, { text: '가족 순자산 50억 이상', value: 5 } ],
-                    height: [ { text: '175cm 미만', value: 0 }, { text: '175cm 이상', value: 2 }, { text: '180cm 이상', value: 5 } ],
-                    weight: [ { text: '해당 없음', value: 0 }, { text: 'BMI 정상~과체중 & 인바디 70점+', value: 2 }, { text: 'BMI 정상 & 인바디 80점+', value: 5 } ],
-                    photo: [ { text: '미인증', value: 0 }, { text: '인증 완료', value: 5 } ],
-                    company: [ { text: '미인증', value: 0 }, { text: '중견/공무원', value: 2 }, { text: '대기업/주요 공기업', value: 5 } ],
-                    degree: [ { text: '해당 없음', value: 0 }, { text: '석사 학위', value: 3 }, { text: '박사 학위', value: 5 } ],
-                },
-                maxCore: 135.0, maxBonus: 38.0
-            },
-            female: {
-                core: {
-                    education: [ { text: 'QS/THE Top 10 학사', value: 23.75 }, { text: 'SKY/KAIST/POSTECH, QS/THE Top 50 학사', value: 21 }, { text: '국내 6-8위, QS/THE Top 100 학사', value: 19 }, { text: '국내 9-20위 학사', value: 17 }, { text: '일반 4년제/기타 해외대 학사', value: 15 }, { text: '전문학사', value: 12 }, { text: '고졸 이상', value: 8 }, { text: '고졸 검정고시', value: 4 }, ],
-                    profession: [ { text: '최상위 직군', value: 31.25 }, { text: '상위 직군', value: 28 }, { text: '전문직', value: 26 }, { text: '대기업/주요 공무원', value: 21 }, { text: '중견기업/일반 공무원', value: 16 }, { text: '중소기업/고소득 프리랜서/자영업', value: 8 }, { text: '기타', value: 4 }, ],
-                    income: [ { text: '연봉 2억 이상', value: 21.25 }, { text: '연봉 1.5억 ~ 2억', value: 18 }, { text: '연봉 1억 ~ 1.5억', value: 14 }, { text: '연봉 7천 ~ 1억', value: 11 }, { text: '연봉 5천 ~ 7천', value: 7 }, { text: '연봉 3천 ~ 5천', value: 4 }, { text: '연봉 3천 미만', value: 1 }, ],
-                    asset: [ { text: '순자산 10억 이상', value: 23.75 }, { text: '순자산 5억 ~ 10억', value: 20 }, { text: '순자산 3억 ~ 5억', value: 16 }, { text: '순자산 1억 ~ 3억', value: 12 }, { text: '순자산 5천 ~ 1억', value: 9 }, { text: '순자산 1천 ~ 5천', value: 4 }, { text: '순자산 1천 미만', value: 2 }, ],
-                    age: [ { text: '만 24세 ~ 27세', value: 35 }, { text: '만 28세 ~ 29세', value: 30 }, { text: '만 30세 ~ 33세', value: 25 }, { text: '만 34세 ~ 36세', value: 18 }, { text: '만 37세 ~ 39세', value: 10 }, { text: '만 40세 이상', value: 5 }, ],
-                    appearance: [ { text: '상위 5% (연예인급)', value: 40 }, { text: '상위 20% (매우 매력적)', value: 35 }, { text: '평균 이상 (매력적)', value: 25 }, { text: '평균 (보통)', value: 15 }, { text: '평균 이하 (개선 필요)', value: 5 }, ],
-                },
-                bonus: {
-                    car: [ { text: '해당 없음', value: 0 }, { text: '차량 소유', value: 2 }, { text: '1억 이상 고급차', value: 5 } ],
-                    family_asset: [ { text: '해당 없음', value: 0 }, { text: '가족 순자산 10억 이상', value: 2 }, { text: '가족 순자산 50억 이상', value: 5 } ],
-                    height: [ { text: '165cm 미만', value: 0 }, { text: '165cm 이상', value: 2 } ],
-                    weight: [ { text: '해당 없음', value: 0 }, { text: 'BMI 정상~과체중 & 인바디 70점+', value: 2 }, { text: 'BMI 정상 & 인바디 80점+', value: 5 } ],
-                    photo: [ { text: '미인증', value: 0 }, { text: '인증 완료', value: 5 } ],
-                    company: [ { text: '미인증', value: 0 }, { text: '중견/공무원', value: 2 }, { text: '대기업/주요 공기업', value: 5 } ],
-                    career: [ { text: '해당 없음', value: 0 }, { text: '미인대회/모델 경력', value: 5 } ],
-                },
-                maxCore: 175.0, maxBonus: 32.0
-            }
+        // 점수 데이터 정의
+        const maleScoresData = {
+            education: [
+                { label: '세계 최상위권 대학 학사', score: 20 },
+                { label: '국내 대학 순위(1~5위): SKY/KAIST/POSTECH 학사, 세계 Top 50 대학 학사', score: 18 },
+                { label: '국내 대학 순위(6~8위) 학사, 세계 Top 100 대학 학사', score: 17 },
+                { label: '국내 대학 순위(9~20위) 학사', score: 15 },
+                { label: '국내 대학 순위(21~50위) 학사 또는 기타 해외 명문/주요 대학 학사', score: 13 },
+                { label: '일반 4년제 대학 학사', score: 11 },
+                { label: '전문학사', score: 8 },
+                { label: '고졸 이상', score: 5 },
+                { label: '고졸 검정고시', score: 2 }
+            ],
+            job: [
+                { label: '최상위 직군', score: 30 },
+                { label: '상위 직군', score: 27 },
+                { label: '전문직', score: 25 },
+                { label: '대기업/주요 공무원', score: 20 },
+                { label: '중견기업/일반 공무원', score: 15 },
+                { label: '중소기업/고소득 프리랜서/자영업', score: 8 },
+                { label: '기타', score: 4 }
+            ],
+            income: [
+                { label: '연봉 2억 이상', score: 27.50 },
+                { label: '연봉 1억 5천만 원 이상 ~ 2억 미만', score: 23 },
+                { label: '연봉 1억 원 이상 ~ 1억 5천만 원 미만', score: 18 },
+                { label: '연봉 7천만 원 이상 ~ 1억 원 미만', score: 14 },
+                { label: '연봉 5천万 원 이상 ~ 7천만 원 미만', score: 9 },
+                { label: '연봉 3천만 원 이상 ~ 5천만 원 미만', score: 5 },
+                { label: '연봉 3천만 원 미만', score: 2 }
+            ],
+            asset: [
+                { label: '순자산 10억 이상', score: 22.50 },
+                { label: '순자산 5억 이상 ~ 10억 미만', score: 19 },
+                { label: '순자산 3억 이상 ~ 5억 미만', score: 15 },
+                { label: '순자산 1억 이상 ~ 3억 미만', score: 11 },
+                { label: '순자산 5천만 원 이상 ~ 1억 미만', score: 8 },
+                { label: '순자산 1천만 원 이상 ~ 5천만 원 미만', score: 4 },
+                { label: '순자산 1천만 원 미만', score: 2 }
+            ],
+            age: [
+                { label: '20대 후반 ~ 30대 초반 (만 26세 ~ 만 33세)', score: 15 },
+                { label: '30대 중반 ~ 30대 후반 (만 34세 ~ 만 39세)', score: 12 },
+                { label: '40대 초반 ~ 40대 중반 (만 40세 ~ 만 45세)', score: 8 },
+                { label: '40대 후반 이상 (만 46세 이상)', score: 4 }
+            ],
+            appearance: [
+                { label: '코디네이터 평가 상위 5% (연예인급 외모)', score: 20 },
+                { label: '코디네이터 평가 상위 20% (매우 매력적인 외모)', score: 18 },
+                { label: '코디네이터 평가 평균 이상 (매력적인 외모)', score: 13 },
+                { label: '코디네이터 평가 평균 (보통의 외모)', score: 8 },
+                { label: '코디네이터 평가 평균 이하 (개선이 필요한 외모)', score: 3 }
+            ]
         };
 
-        function populateSelect(selectId, options) {
-            const select = document.getElementById(selectId);
-            if (!select) return;
-            select.innerHTML = '';
-            
-            const defaultOpt = document.createElement('option');
-            defaultOpt.textContent = '선택해주세요';
-            defaultOpt.value = ''; // Use empty string for easier validation
-            defaultOpt.disabled = true;
-            defaultOpt.selected = true;
-            select.appendChild(defaultOpt);
+        const femaleScoresData = {
+            education: [
+                { label: '세계 최상위권 대학 (QS/THE 랭킹 기준 Top 10) 학사 학위', score: 23.75 },
+                { label: '국내 대학 순위(1~5위): SKY/KAIST/POSTECH 학사, 세계 Top 50 대학 학사', score: 21 },
+                { label: '국내 대학 순위(6~8위) 학사, 세계 Top 100 대학 학사', score: 19 },
+                { label: '국내 대학 순위(9~20위) 학사', score: 17 },
+                { label: '국내 대학 순위(21~50위) 학사 또는 기타 해외 명문/주요 대학 학사', score: 15 },
+                { label: '일반 4년제 대학 학사', score: 13 },
+                { label: '전문학사', score: 10 },
+                { label: '고졸 이상', score: 8 },
+                { label: '고졸 검정고시', score: 4 }
+            ],
+            job: [
+                { label: '최상위 직군', score: 31.25 },
+                { label: '상위 직군', score: 28 },
+                { label: '전문직', score: 26 },
+                { label: '대기업/주요 공무원', score: 21 },
+                { label: '중견기업/일반 공무원', score: 16 },
+                { label: '중소기업/고소득 프리랜서/자영업', score: 8 },
+                { label: '기타', score: 4 }
+            ],
+            income: [
+                { label: '연봉 2억 이상', score: 21.25 },
+                { label: '연봉 1억 5천만 원 이상 ~ 2억 미만', score: 18 },
+                { label: '연봉 1억 원 이상 ~ 1억 5천만 원 미만', score: 14 },
+                { label: '연봉 7천만 원 이상 ~ 1억 원 미만', score: 11 },
+                { label: '연봉 5천만 원 이상 ~ 7천만 원 미만', score: 7 },
+                { label: '연봉 3천만 원 이상 ~ 5천만 원 미만', score: 4 },
+                { label: '연봉 3천만 원 미만', score: 1 }
+            ],
+            asset: [
+                { label: '순자산 10억 이상', score: 23.75 },
+                { label: '순자산 5억 이상 ~ 10억 미만', score: 20 },
+                { label: '순자산 3억 이상 ~ 5억 미만', score: 16 },
+                { label: '순자산 1억 이상 ~ 3억 미만', score: 12 },
+                { label: '순자산 5천만 원 이상 ~ 1억 미만', score: 9 },
+                { label: '순자산 1천만 원 이상 ~ 5천만 원 미만', score: 4 },
+                { label: '순자산 1천만 원 미만', score: 2 }
+            ],
+            age: [
+                { label: '20대 중반 (만 24세 ~ 만 27세)', score: 35 },
+                { label: '20대 후반 (만 28세 ~ 만 29세)', score: 30 },
+                { label: '30대 초반 (만 30세 ~ 만 33세)', score: 25 },
+                { label: '30대 중반 (만 34세 ~ 만 36세)', score: 18 },
+                { label: '30대 후반 (만 37세 ~ 만 39세)', score: 10 },
+                { label: '40대 이상 (만 40세 이상)', score: 5 }
+            ],
+            appearance: [
+                { label: '코디네이터 평가 상위 5% (연예인급 외모)', score: 40 },
+                { label: '코디네이터 평가 상위 20% (매우 매력적인 외모)', score: 35 },
+                { label: '코디네이터 평가 평균 이상 (매력적인 외모)', score: 25 },
+                { label: '코디네이터 평가 평균 (보통의 외모)', score: 15 },
+                { label: '코디네이터 평가 평균 이하 (개선이 필요한 외모)', score: 5 }
+            ]
+        };
 
-            options.forEach(option => {
-                const opt = document.createElement('option');
-                opt.value = option.value;
-                opt.textContent = option.text;
-                select.appendChild(opt);
+        // 최대 원점수 (핵심 항목만)
+        const MALE_MAX_CORE_RAW_SCORE = 20 + 30 + 27.50 + 22.50 + 15 + 20; // 135.00
+        const FEMALE_MAX_CORE_RAW_SCORE = 23.75 + 31.25 + 21.25 + 23.75 + 35 + 40; // 175.00
+
+        // 가산점 최대 합계 (정규화 전)
+        const MALE_MAX_BONUS_RAW_SCORE = 5 + 5 + 5 + 5 + 5 + 5 + 5 + 5; // 40 (차, 부모님자산, 키, 몸무게, 사진, 회사, 학위, 부모님직업)
+        const FEMALE_MAX_BONUS_RAW_SCORE = 5 + 5 + 2 + 5 + 5 + 5 + 5 + 5; // 37 (차, 부모님자산, 키, 몸무게, 사진, 회사, 미인대회, 부모님직업)
+
+        // 가산점 정규화 목표 점수
+        const NORMALIZED_BONUS_MAX_SCORE = 20;
+
+        // 최종 총점 만점 (핵심 항목 100점 + 정규화된 가산점 20점)
+        const FINAL_TOTAL_SCORE_MAX = 120;
+
+        // 매칭 등급 기준 (120점 만점 기준)
+        const TIER_RANGES = [
+            { name: '로얄 클래스 (Royal Class)', min: 117, max: 120, color: 'bg-yellow-300', textColor: 'text-gray-800' },
+            { name: '프레스티지 클래스 (Prestige Class)', min: 110, max: 116, color: 'bg-blue-400', textColor: 'text-white' },
+            { name: '다이아몬드 클래스 (Diamond Class)', min: 100, max: 109, color: 'bg-purple-400', textColor: 'text-white' },
+            { name: '플래티넘 클래스 (Platinum Class)', min: 90, max: 99, color: 'bg-green-400', textColor: 'text-white' },
+            { name: '골드 클래스 (Gold Class)', min: 75, max: 89, color: 'bg-orange-400', textColor: 'text-white' },
+            { name: '실버 클래스 (Silver Class)', min: 55, max: 74, color: 'bg-gray-400', textColor: 'text-white' },
+            { name: '프라임 클래스 (Prime Class)', min: 30, max: 54, color: 'bg-red-400', textColor: 'text-white' },
+            { name: '베이직 클래스 (Basic Class)', min: 0, max: 29, color: 'bg-gray-300', textColor: 'text-gray-800' }
+        ];
+
+        // 드롭다운 옵션 채우기 함수
+        function populateDropdown(selectElement, data) {
+            selectElement.innerHTML = '<option value="" disabled selected>선택하세요</option>'; // 초기 안내 문구
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.score;
+                option.textContent = `${item.label} (${item.score}점)`;
+                selectElement.appendChild(option);
             });
         }
 
-        function initializeDropdowns() {
-            Object.keys(scoreData.male.core).forEach(cat => populateSelect(`male-${cat}`, scoreData.male.core[cat]));
-            Object.keys(scoreData.male.bonus).forEach(cat => populateSelect(`male-${cat.replace('_', '-')}`, scoreData.male.bonus[cat]));
-            Object.keys(scoreData.female.core).forEach(cat => populateSelect(`female-${cat}`, scoreData.female.core[cat]));
-            Object.keys(scoreData.female.bonus).forEach(cat => populateSelect(`female-${cat.replace('_', '-')}`, scoreData.female.bonus[cat]));
-        }
+        // DOMContentLoaded 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', function () {
+            // 요소 가져오기
+            const maleEducationSelect = document.getElementById('maleEducation');
+            const maleJobSelect = document.getElementById('maleJob');
+            const maleIncomeSelect = document.getElementById('maleIncome');
+            const maleAssetSelect = document.getElementById('maleAsset');
+            const maleAgeSelect = document.getElementById('maleAge');
+            const maleAppearanceSelect = document.getElementById('maleAppearance');
 
-        function calculateScore(gender) {
-            const data = scoreData[gender];
-            let coreScore = 0;
-            let bonusScore = 0;
-            let allCoreSelected = true;
+            const femaleEducationSelect = document.getElementById('femaleEducation');
+            const femaleJobSelect = document.getElementById('femaleJob');
+            const femaleIncomeSelect = document.getElementById('femaleIncome');
+            const femaleAssetSelect = document.getElementById('femaleAsset');
+            const femaleAgeSelect = document.getElementById('femaleAge');
+            const femaleAppearanceSelect = document.getElementById('femaleAppearance');
 
-            for (const category of Object.keys(data.core)) {
-                const select = document.getElementById(`${gender}-${category}`);
-                if (select.value === '') {
-                    allCoreSelected = false;
-                    break;
-                }
-                coreScore += parseFloat(select.value);
-            }
-            
-            if (!allCoreSelected) return null;
+            const maleCoreRawTotalSpan = document.getElementById('maleCoreRawTotal');
+            const maleBonusRawTotalSpan = document.getElementById('maleBonusRawTotal');
+            const maleTotalScoreSpan = document.getElementById('maleTotalScore');
+            const maleTierDisplay = document.getElementById('maleTierDisplay');
+            const maleProfileTierSpan = document.getElementById('maleProfileTier');
 
-            for (const category of Object.keys(data.bonus)) {
-                const select = document.getElementById(`${gender}-${category.replace('_', '-')}`);
-                if (select.value !== '') { // Only add if a bonus is selected
-                    bonusScore += parseFloat(select.value);
-                }
-            }
-            
-            const normalizedCore = (coreScore / data.maxCore) * 100;
-            const normalizedBonus = (bonusScore / data.maxBonus) * 20;
-            const finalScore = normalizedCore + normalizedBonus;
 
-            return {
-                coreRaw: coreScore,
-                bonusRaw: bonusScore,
-                coreNormalized: normalizedCore,
-                bonusNormalized: normalizedBonus,
-                finalScore: finalScore
+            const femaleCoreRawTotalSpan = document.getElementById('femaleCoreRawTotal');
+            const femaleBonusRawTotalSpan = document.getElementById('femaleBonusRawTotal');
+            const femaleTotalScoreSpan = document.getElementById('femaleTotalScore');
+            const femaleTierDisplay = document.getElementById('femaleTierDisplay');
+            const femaleProfileTierSpan = document.getElementById('femaleProfileTier');
+
+
+            const malePerspectiveStatusSpan = document.getElementById('malePerspectiveStatus');
+            const femalePerspectiveStatusSpan = document.getElementById('femalePerspectiveStatus');
+            const calculateAllBtn = document.getElementById('calculateAllBtn'); // 공통 버튼
+
+            // 가산점 체크박스 요소들
+            const maleBonusCheckboxes = {
+                car: document.getElementById('maleCarBonus'),
+                luxuryCar: document.getElementById('maleLuxuryCarBonus'),
+                parentAsset: document.getElementById('maleParentAssetBonus'),
+                luxuryParentAsset: document.getElementById('maleLuxuryParentAssetBonus'),
+                height: document.getElementById('maleHeightBonus'),
+                superHeight: document.getElementById('maleSuperHeightBonus'),
+                weight: document.getElementById('maleWeightBonus'),
+                superWeight: document.getElementById('maleSuperWeightBonus'),
+                photo: document.getElementById('malePhotoBonus'),
+                company: document.getElementById('maleCompanyBonus'),
+                majorCompany: document.getElementById('maleMajorCompanyBonus'),
+                masters: document.getElementById('maleMastersBonus'),
+                phd: document.getElementById('malePhDBonus'),
+                parentJob: document.getElementById('maleParentJobBonus'),
+                parentJob2: document.getElementById('maleParentJobBonus2'),
+                parentJob3: document.getElementById('maleParentJobBonus3')
             };
-        }
 
-        function getTier(score) {
-            if (score >= 110) return { tier: '플래티넘', className: 'tier-platinum', borderClassName: 'tier-border-platinum' };
-            if (score >= 90) return { tier: '골드', className: 'tier-gold', borderClassName: 'tier-border-gold' };
-            if (score >= 70) return { tier: '실버', className: 'tier-silver', borderClassName: 'tier-border-silver' };
-            if (score >= 50) return { tier: '브론즈', className: 'tier-bronze', borderClassName: 'tier-border-bronze' };
-            return { tier: '일반', className: 'tier-general', borderClassName: 'tier-border-general' };
-        }
-        
-        function getTierLevel(score) {
-            if (score >= 110) return 4;
-            if (score >= 90) return 3;
-            if (score >= 70) return 2;
-            if (score >= 50) return 1;
-            return 0;
-        }
+            const femaleBonusCheckboxes = {
+                car: document.getElementById('femaleCarBonus'),
+                luxuryCar: document.getElementById('femaleLuxuryCarBonus'),
+                parentAsset: document.getElementById('femaleParentAssetBonus'),
+                luxuryParentAsset: document.getElementById('femaleLuxuryParentAssetBonus'),
+                height: document.getElementById('femaleHeightBonus'),
+                weight: document.getElementById('femaleWeightBonus'),
+                superWeight: document.getElementById('femaleSuperWeightBonus'),
+                photo: document.getElementById('femalePhotoBonus'),
+                company: document.getElementById('femaleCompanyBonus'),
+                majorCompany: document.getElementById('femaleMajorCompanyBonus'),
+                beautyModel: document.getElementById('femaleBeautyModelBonus'),
+                parentJob: document.getElementById('femaleParentJobBonus'),
+                parentJob2: document.getElementById('femaleParentJobBonus2'),
+                parentJob3: document.getElementById('femaleParentJobBonus3')
+            };
 
-        function getMatchStatus(myScore, partnerScore) {
-            const myTierLevel = getTierLevel(myScore);
-            const partnerTierLevel = getTierLevel(partnerScore);
-            const diff = partnerTierLevel - myTierLevel;
 
-            if (diff > 0) return `<span class="font-bold text-green-600">${diff}단계 상향 매칭!</span> (상대 점수: ${partnerScore.toFixed(1)}점)`;
-            if (diff < 0) return `<span class="font-bold text-red-600">${Math.abs(diff)}단계 하향 매칭!</span> (상대 점수: ${partnerScore.toFixed(1)}점)`;
-            return `<span class="font-bold text-blue-600">정상 매칭!</span> (상대 점수: ${partnerScore.toFixed(1)}점)`;
-        }
+            // 초기 드롭다운 채우기
+            populateDropdown(maleEducationSelect, maleScoresData.education);
+            populateDropdown(maleJobSelect, maleScoresData.job);
+            populateDropdown(maleIncomeSelect, maleScoresData.income);
+            populateDropdown(maleAssetSelect, maleScoresData.asset);
+            populateDropdown(maleAgeSelect, maleScoresData.age);
+            populateDropdown(maleAppearanceSelect, maleScoresData.appearance);
 
-        function displayCalculation(gender, result) {
-            const { coreRaw, bonusRaw, coreNormalized, bonusNormalized, finalScore } = result;
+            populateDropdown(femaleEducationSelect, femaleScoresData.education);
+            populateDropdown(femaleJobSelect, femaleScoresData.job);
+            populateDropdown(femaleIncomeSelect, femaleScoresData.income);
+            populateDropdown(femaleAssetSelect, femaleScoresData.asset);
+            populateDropdown(femaleAgeSelect, femaleScoresData.age);
+            populateDropdown(femaleAppearanceSelect, femaleScoresData.appearance);
+
+            // 티어 등급을 가져오는 헬퍼 함수
+            const getTier = (score) => {
+                for (const tier of TIER_RANGES) {
+                    if (score >= tier.min && score <= tier.max) {
+                        return tier;
+                    }
+                }
+                return TIER_RANGES[TIER_RANGES.length - 1]; // 기본값 (가장 낮은 티어)
+            };
+
+            // 상대방 관점에서의 매칭 상태를 결정하는 헬퍼 함수 (티어 기반)
+            const getPerspectiveStatus = (targetScore, myScore) => {
+                const targetTier = getTier(targetScore);
+                const myTier = getTier(myScore);
+
+                let statusText = '';
+                let statusClass = '';
+
+                // 티어 레벨 비교 (높은 점수가 더 낮은 인덱스에 있다고 가정)
+                const targetTierIndex = TIER_RANGES.indexOf(targetTier);
+                const myTierIndex = TIER_RANGES.indexOf(myTier);
+
+                if (targetTierIndex < myTierIndex) { // 상대방 티어가 더 높을 경우
+                    statusText = '상향';
+                    statusClass = 'status-upward';
+                } else if (targetTierIndex > myTierIndex) { // 상대방 티어가 더 낮을 경우
+                    statusText = '하향';
+                    statusClass = 'status-downward';
+                } else { // 티어가 같을 경우
+                    statusText = '정상';
+                    statusClass = 'status-normal';
+                }
+                
+                return { text: statusText, class: statusClass };
+            };
+
+            // 가산점 계산 함수 (그룹별 상호 배타적 선택 반영)
+            const calculateBonusScore = (checkboxes) => {
+                let bonus = 0;
+                const bonusGroups = {}; // 그룹별로 선택된 체크박스의 value를 저장
+
+                for (const key in checkboxes) {
+                    const checkbox = checkboxes[key];
+                    // 체크박스 요소가 null이 아닌지 확인
+                    if (checkbox && checkbox.checked) {
+                        const group = checkbox.dataset.bonusGroup;
+                        if (group) {
+                            // 그룹이 있다면, 해당 그룹의 최대값만 반영
+                            if (!bonusGroups[group] || parseFloat(checkbox.value) > bonusGroups[group]) {
+                                bonusGroups[group] = parseFloat(checkbox.value);
+                            }
+                        } else {
+                            // 그룹이 없는 단일 체크박스는 바로 합산
+                            bonus += parseFloat(checkbox.value);
+                        }
+                    }
+                }
+
+                // 그룹별로 계산된 최대 보너스 점수 합산
+                for (const groupName in bonusGroups) {
+                    bonus += bonusGroups[groupName];
+                }
+                
+                return bonus;
+            };
+
+
+            // 시뮬레이터 업데이트 함수
+            const updateSimulator = () => {
+                // 필수 항목 선택 여부 확인
+                const maleRequiredSelects = [maleEducationSelect, maleJobSelect, maleIncomeSelect, maleAssetSelect, maleAgeSelect, maleAppearanceSelect];
+                const femaleRequiredSelects = [femaleEducationSelect, femaleJobSelect, femaleIncomeSelect, femaleAssetSelect, femaleAgeSelect, femaleAppearanceSelect];
+
+                const maleAllSelected = maleRequiredSelects.every(select => select.value !== "");
+                const femaleAllSelected = femaleRequiredSelects.every(select => select.value !== "");
+
+                if (!maleAllSelected || !femaleAllSelected) {
+                    maleCoreRawTotalSpan.textContent = '0';
+                    maleBonusRawTotalSpan.textContent = '0';
+                    maleTotalScoreSpan.textContent = '0';
+                    maleTierDisplay.textContent = '선택 필요';
+                    maleTierDisplay.className = 'bg-gray-300 text-gray-800';
+                    maleProfileTierSpan.textContent = ''; // 결과 요약 부분 초기화
+                    maleProfileTierSpan.className = ''; // 결과 요약 부분 초기화
+                    malePerspectiveStatusSpan.textContent = '필수 항목을 모두 선택하고 결과 확인 버튼을 누르세요';
+                    malePerspectiveStatusSpan.className = 'bg-gray-300 text-gray-800 text-sm p-2 rounded-full';
+
+
+                    femaleCoreRawTotalSpan.textContent = '0';
+                    femaleBonusRawTotalSpan.textContent = '0';
+                    femaleTotalScoreSpan.textContent = '0';
+                    femaleTierDisplay.textContent = '선택 필요';
+                    femaleTierDisplay.className = 'bg-gray-300 text-gray-800';
+                    femaleProfileTierSpan.textContent = ''; // 결과 요약 부분 초기화
+                    femaleProfileTierSpan.className = ''; // 결과 요약 부분 초기화
+                    femalePerspectiveStatusSpan.textContent = '필수 항목을 모두 선택하고 결과 확인 버튼을 누르세요';
+                    femalePerspectiveStatusSpan.className = 'bg-gray-300 text-gray-800 text-sm p-2 rounded-full';
+                    return; // 필수 항목 미선택 시 계산 중단
+                }
+                
+                // 남성 프로필 핵심 항목 원점수 합계
+                let maleCoreRawTotal =
+                    parseFloat(maleEducationSelect.value) +
+                    parseFloat(maleJobSelect.value) +
+                    parseFloat(maleIncomeSelect.value) +
+                    parseFloat(maleAssetSelect.value) +
+                    parseFloat(maleAgeSelect.value) +
+                    parseFloat(maleAppearanceSelect.value);
+                maleCoreRawTotalSpan.textContent = maleCoreRawTotal.toFixed(2); // 소수점 2자리까지 표시
+
+                // 남성 가산점 합계 (정규화 전)
+                let maleBonusRawTotal = calculateBonusScore(maleBonusCheckboxes);
+                maleBonusRawTotalSpan.textContent = maleBonusRawTotal;
+
+                // 남성 가산점 20점 만점 정규화 (최대 40점 -> 20점)
+                const maleNormalizedBonus = Math.min(NORMALIZED_BONUS_MAX_SCORE, Math.round((maleBonusRawTotal / MALE_MAX_BONUS_RAW_SCORE) * NORMALIZED_BONUS_MAX_SCORE));
+
+                // 최종 남성 총점 (120점 만점)
+                const maleFinalTotalScore = Math.min(FINAL_TOTAL_SCORE_MAX, Math.round((maleCoreRawTotal / MALE_MAX_CORE_RAW_SCORE) * 100) + maleNormalizedBonus);
+                maleTotalScoreSpan.textContent = maleFinalTotalScore;
+                
+                // 남성 티어 표시
+                const maleTier = getTier(maleFinalTotalScore);
+                maleTierDisplay.textContent = maleTier.name;
+                maleTierDisplay.className = `tier-${maleTier.name.split(' ')[0].toLowerCase().replace('(royal', 'royal').replace('(prestige', 'prestige').replace('(diamond', 'diamond').replace('(platinum', 'platinum').replace('(gold', 'gold').replace('(silver', 'silver').replace('(prime', 'prime').replace('(basic', 'basic')} ${maleTier.textColor}`;
+                maleProfileTierSpan.textContent = maleTier.name; // 결과 요약 부분 업데이트
+                maleProfileTierSpan.className = `tier-${maleTier.name.split(' ')[0].toLowerCase().replace('(royal', 'royal').replace('(prestige', 'prestige').replace('(diamond', 'diamond').replace('(platinum', 'platinum').replace('(gold', 'gold').replace('(silver', 'silver').replace('(prime', 'prime').replace('(basic', 'basic')} ${maleTier.textColor}`;
+
+
+                // 여성 프로필 핵심 항목 원점수 합계
+                let femaleCoreRawTotal =
+                    parseFloat(femaleEducationSelect.value) +
+                    parseFloat(femaleJobSelect.value) +
+                    parseFloat(femaleIncomeSelect.value) +
+                    parseFloat(femaleAssetSelect.value) +
+                    parseFloat(femaleAgeSelect.value) +
+                    parseFloat(femaleAppearanceSelect.value);
+                femaleCoreRawTotalSpan.textContent = femaleCoreRawTotal.toFixed(2); // 소수점 2자리까지 표시
+                
+                // 여성 가산점 합계 (정규화 전)
+                let femaleBonusRawTotal = calculateBonusScore(femaleBonusCheckboxes);
+                femaleBonusRawTotalSpan.textContent = femaleBonusRawTotal;
+
+                // 여성 가산점 20점 만점 정규화 (최대 37점 -> 20점)
+                const femaleNormalizedBonus = Math.min(NORMALIZED_BONUS_MAX_SCORE, Math.round((femaleBonusRawTotal / FEMALE_MAX_BONUS_RAW_SCORE) * NORMALIZED_BONUS_MAX_SCORE));
+
+                // 최종 여성 총점 (120점 만점)
+                const femaleFinalTotalScore = Math.min(FINAL_TOTAL_SCORE_MAX, Math.round((femaleCoreRawTotal / FEMALE_MAX_CORE_RAW_SCORE) * 100) + femaleNormalizedBonus);
+                femaleTotalScoreSpan.textContent = femaleFinalTotalScore;
+
+                // 여성 티어 표시
+                const femaleTier = getTier(femaleFinalTotalScore);
+                femaleTierDisplay.textContent = femaleTier.name;
+                femaleTierDisplay.className = `tier-${femaleTier.name.split(' ')[0].toLowerCase().replace('(royal', 'royal').replace('(prestige', 'prestige').replace('(diamond', 'diamond').replace('(platinum', 'platinum').replace('(gold', 'gold').replace('(silver', 'silver').replace('(prime', 'prime').replace('(basic', 'basic')} ${femaleTier.textColor}`;
+                femaleProfileTierSpan.textContent = femaleTier.name; // 결과 요약 부분 업데이트
+                femaleProfileTierSpan.className = `tier-${femaleTier.name.split(' ')[0].toLowerCase().replace('(royal', 'royal').replace('(prestige', 'prestige').replace('(diamond', 'diamond').replace('(platinum', 'platinum').replace('(gold', 'gold').replace('(silver', 'silver').replace('(prime', 'prime').replace('(basic', 'basic')} ${femaleTier.textColor}`;
+
+
+                // 상대방 관점에서의 매칭 상태 업데이트
+                const maleStatusFromFemale = getPerspectiveStatus(maleFinalTotalScore, femaleFinalTotalScore);
+                malePerspectiveStatusSpan.textContent = `여성 기준 ${maleStatusFromFemale.text} 매칭!`;
+                malePerspectiveStatusSpan.className = `ml-2 px-2 py-1 text-sm rounded-full ${maleStatusFromFemale.class}`;
+
+                const femaleStatusFromMale = getPerspectiveStatus(femaleFinalTotalScore, maleFinalTotalScore);
+                femalePerspectiveStatusSpan.textContent = `남성 기준 ${femaleStatusFromMale.text} 매칭!`;
+                femalePerspectiveStatusSpan.className = `ml-2 px-2 py-1 text-sm rounded-full ${femaleStatusFromMale.class}`;
+            };
+
+            // 이벤트 리스너 등록
+            const allSelects = document.querySelectorAll('select');
+            allSelects.forEach(select => select.addEventListener('change', updateSimulator));
             
-            document.getElementById(`${gender}-core-raw-score`).textContent = coreRaw.toFixed(2);
-            document.getElementById(`${gender}-bonus-raw-score`).textContent = bonusRaw.toFixed(2);
-            document.getElementById(`${gender}-core-raw-score-2`).textContent = coreRaw.toFixed(2);
-            document.getElementById(`${gender}-bonus-raw-score-2`).textContent = bonusRaw.toFixed(2);
-            document.getElementById(`${gender}-core-normalized-score`).textContent = coreNormalized.toFixed(2);
-            document.getElementById(`${gender}-bonus-normalized-score`).textContent = bonusNormalized.toFixed(2);
-            document.getElementById(`${gender}-core-normalized-score-2`).textContent = coreNormalized.toFixed(2);
-            document.getElementById(`${gender}-bonus-normalized-score-2`).textContent = bonusNormalized.toFixed(2);
-            document.getElementById(`${gender}-final-score-calc`).textContent = finalScore.toFixed(2);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeDropdowns();
-            const calculateBtn = document.getElementById('calculate-btn');
-            const resultsContainer = document.getElementById('results-container');
-
-            // --- Fill Detail Tables (omitted for brevity, same as previous version) ---
-            const detailSections = document.querySelectorAll('.space-y-4 details');
-            detailSections.forEach(detail => {
-                const summaryText = detail.querySelector('summary').textContent;
-                if (summaryText.includes('학력')) {
-                    detail.querySelector('div').innerHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-100"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">항목</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">남성 (20점)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">여성 (23.75점)</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-6 py-4">QS/THE Top 10 학사</td><td class="px-6 py-4">20.0</td><td class="px-6 py-4">23.75</td></tr><tr><td class="px-6 py-4">SKY/KAIST/POSTECH, QS/THE Top 50 학사</td><td class="px-6 py-4">18.0</td><td class="px-6 py-4">21.0</td></tr><tr><td class="px-6 py-4">국내 6-8위, QS/THE Top 100 학사</td><td class="px-6 py-4">17.0</td><td class="px-6 py-4">19.0</td></tr><tr><td class="px-6 py-4">국내 9-20위 학사</td><td class="px-6 py-4">15.0</td><td class="px-6 py-4">17.0</td></tr><tr><td class="px-6 py-4">일반 4년제/기타 해외대 학사</td><td class="px-6 py-4">13.0</td><td class="px-6 py-4">15.0</td></tr><tr><td class="px-6 py-4">전문학사</td><td class="px-6 py-4">10.0</td><td class="px-6 py-4">12.0</td></tr><tr><td class="px-6 py-4">고졸 이상</td><td class="px-6 py-4">7.0</td><td class="px-6 py-4">8.0</td></tr><tr><td class="px-6 py-4">고졸 검정고시</td><td class="px-6 py-4">2.0</td><td class="px-6 py-4">4.0</td></tr></tbody></table>`;
-                } else if (summaryText.includes('소득')) {
-                     detail.querySelector('div').innerHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-100"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">항목</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">남성 (27.5점)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">여성 (21.25점)</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-6 py-4">연봉 2억 이상</td><td class="px-6 py-4">27.5</td><td class="px-6 py-4">21.25</td></tr><tr><td class="px-6 py-4">연봉 1.5억 ~ 2억</td><td class="px-6 py-4">23.0</td><td class="px-6 py-4">18.0</td></tr><tr><td class="px-6 py-4">연봉 1억 ~ 1.5억</td><td class="px-6 py-4">18.0</td><td class="px-6 py-4">14.0</td></tr><tr><td class="px-6 py-4">연봉 7천 ~ 1억</td><td class="px-6 py-4">14.0</td><td class="px-6 py-4">11.0</td></tr><tr><td class="px-6 py-4">연봉 5천 ~ 7천</td><td class="px-6 py-4">9.0</td><td class="px-6 py-4">7.0</td></tr><tr><td class="px-6 py-4">연봉 3천 ~ 5천</td><td class="px-6 py-4">5.0</td><td class="px-6 py-4">4.0</td></tr><tr><td class="px-6 py-4">연봉 3천 미만</td><td class="px-6 py-4">2.0</td><td class="px-6 py-4">1.0</td></tr></tbody></table>`;
-                } else if (summaryText.includes('개인 자산')) {
-                    detail.querySelector('div').innerHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-100"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">항목</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">남성 (22.5점)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">여성 (23.75점)</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-6 py-4">순자산 10억 이상</td><td class="px-6 py-4">22.5</td><td class="px-6 py-4">23.75</td></tr><tr><td class="px-6 py-4">순자산 5억 ~ 10억</td><td class="px-6 py-4">19.0</td><td class="px-6 py-4">20.0</td></tr><tr><td class="px-6 py-4">순자산 3억 ~ 5억</td><td class="px-6 py-4">15.0</td><td class="px-6 py-4">16.0</td></tr><tr><td class="px-6 py-4">순자산 1억 ~ 3억</td><td class="px-6 py-4">11.0</td><td class="px-6 py-4">12.0</td></tr><tr><td class="px-6 py-4">순자산 5천 ~ 1억</td><td class="px-6 py-4">8.0</td><td class="px-6 py-4">9.0</td></tr><tr><td class="px-6 py-4">순자산 1천 ~ 5천</td><td class="px-6 py-4">4.0</td><td class="px-6 py-4">4.0</td></tr><tr><td class="px-6 py-4">순자산 1천 미만</td><td class="px-6 py-4">2.0</td><td class="px-6 py-4">2.0</td></tr></tbody></table>`;
-                } else if (summaryText.includes('나이')) {
-                    detail.querySelector('div').innerHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-100"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">항목</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">남성 (15점)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">여성 (35점)</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-6 py-4">만 24-27세</td><td class="px-6 py-4">-</td><td class="px-6 py-4">35.0</td></tr><tr><td class="px-6 py-4">만 26-33세</td><td class="px-6 py-4">15.0</td><td class="px-6 py-4">-</td></tr><tr><td class="px-6 py-4">만 28-29세</td><td class="px-6 py-4">-</td><td class="px-6 py-4">30.0</td></tr><tr><td class="px-6 py-4">만 30-33세</td><td class="px-6 py-4">-</td><td class="px-6 py-4">25.0</td></tr><tr><td class="px-6 py-4">만 34-36세</td><td class="px-6 py-4">-</td><td class="px-6 py-4">18.0</td></tr><tr><td class="px-6 py-4">만 34-39세</td><td class="px-6 py-4">12.0</td><td class="px-6 py-4">-</td></tr><tr><td class="px-6 py-4">만 37-39세</td><td class="px-6 py-4">-</td><td class="px-6 py-4">10.0</td></tr><tr><td class="px-6 py-4">만 40-45세</td><td class="px-6 py-4">8.0</td><td class="px-6 py-4">-</td></tr><tr><td class="px-6 py-4">만 40세 이상</td><td class="px-6 py-4">-</td><td class="px-6 py-4">5.0</td></tr><tr><td class="px-6 py-4">만 46세 이상</td><td class="px-6 py-4">4.0</td><td class="px-6 py-4">-</td></tr></tbody></table>`;
-                } else if (summaryText.includes('외모')) {
-                    detail.querySelector('div').innerHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-100"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">항목</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">남성 (20점)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">여성 (40점)</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-6 py-4">상위 5% (연예인급)</td><td class="px-6 py-4">20.0</td><td class="px-6 py-4">40.0</td></tr><tr><td class="px-6 py-4">상위 20% (매우 매력적)</td><td class="px-6 py-4">18.0</td><td class="px-6 py-4">35.0</td></tr><tr><td class="px-6 py-4">평균 이상 (매력적)</td><td class="px-6 py-4">13.0</td><td class="px-6 py-4">25.0</td></tr><tr><td class="px-6 py-4">평균 (보통)</td><td class="px-6 py-4">8.0</td><td class="px-6 py-4">15.0</td></tr><tr><td class="px-6 py-4">평균 이하 (개선 필요)</td><td class="px-6 py-4">3.0</td><td class="px-6 py-4">5.0</td></tr></tbody></table>`;
+            const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+            allCheckboxes.forEach(checkbox => {
+                if (checkbox.dataset.bonusGroup) {
+                    checkbox.addEventListener('change', function(event) {
+                        const clickedCheckbox = event.target;
+                        const groupName = clickedCheckbox.dataset.bonusGroup;
+                        
+                        document.querySelectorAll(`input[type="checkbox"][data-bonus-group="${groupName}"]`).forEach(cb => {
+                            if (cb !== clickedCheckbox) {
+                                cb.checked = false;
+                            }
+                        });
+                        updateSimulator();
+                    });
+                } else {
+                    checkbox.addEventListener('change', updateSimulator);
                 }
             });
 
-            calculateBtn.addEventListener('click', () => {
-                const maleResult = calculateScore('male');
-                const femaleResult = calculateScore('female');
+            // 공통 결과 확인 버튼에만 이벤트 리스너 등록
+            calculateAllBtn.addEventListener('click', updateSimulator);
 
-                if (maleResult === null || femaleResult === null) {
-                    alert('모든 핵심 항목을 선택해주세요.');
-                    resultsContainer.classList.add('hidden');
-                    return;
-                }
+            // 초기 시뮬레이터 업데이트 (페이지 로드 시 초기 상태 설정)
+            updateSimulator();
 
-                const maleTierInfo = getTier(maleResult.finalScore);
-                const femaleTierInfo = getTier(femaleResult.finalScore);
-
-                // Display main scores and tiers
-                document.getElementById('male-score').textContent = maleResult.finalScore.toFixed(1);
-                const maleTierEl = document.getElementById('male-tier');
-                maleTierEl.textContent = maleTierInfo.tier;
-                maleTierEl.className = `text-2xl font-semibold px-4 py-1 rounded-full inline-block ${maleTierInfo.className}`;
-                document.getElementById('male-result-card').className = `text-center p-6 rounded-t-xl ${maleTierInfo.className} ${maleTierInfo.borderClassName}`;
-                document.getElementById('male-calculation-details').className = `text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2 ${maleTierInfo.borderClassName}`;
-
-
-                document.getElementById('female-score').textContent = femaleResult.finalScore.toFixed(1);
-                const femaleTierEl = document.getElementById('female-tier');
-                femaleTierEl.textContent = femaleTierInfo.tier;
-                femaleTierEl.className = `text-2xl font-semibold px-4 py-1 rounded-full inline-block ${femaleTierInfo.className}`;
-                document.getElementById('female-result-card').className = `text-center p-6 rounded-t-xl ${femaleTierInfo.className} ${femaleTierInfo.borderClassName}`;
-                document.getElementById('female-calculation-details').className = `text-left p-4 bg-gray-50 rounded-b-xl border-x-2 border-b-2 ${femaleTierInfo.borderClassName}`;
-
-                // Display calculation details
-                displayCalculation('male', maleResult);
-                displayCalculation('female', femaleResult);
-                
-                // Display match status
-                document.getElementById('male-match-status').innerHTML = `<strong>남성 기준:</strong> ${getMatchStatus(maleResult.finalScore, femaleResult.finalScore)}`;
-                document.getElementById('female-match-status').innerHTML = `<strong>여성 기준:</strong> ${getMatchStatus(femaleResult.finalScore, maleResult.finalScore)}`;
-
-                resultsContainer.classList.remove('hidden');
-                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Collapsible headers (세부 항목별 점수 및 산정 방식)
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    this.classList.toggle('active');
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
             });
         });
     </script>
 </body>
 </html>
-
